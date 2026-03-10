@@ -1,4 +1,4 @@
-# ?? LEGO Insights | Pro Dashboard
+# 🧱 LEGO Insights | Pro Dashboard
 
 > **Advanced Market Analysis & Deal Tracker for Lego Investors**
 
@@ -6,9 +6,9 @@ This project is a complete, end-to-end web application designed to identify prof
 
 ---
 
-## ?? Completed Workshops Overview
+## 🏆 Completed Workshops Overview
 
-### ? Workshop 1: JavaScript Data Manipulation
+### ✅ Workshop 1: JavaScript Data Manipulation
 *   **Location**: `client/v1/`
 *   **Objective**: Mastered core JavaScript functions to process complex data arrays.
 *   **Key Features**:
@@ -17,17 +17,17 @@ This project is a complete, end-to-end web application designed to identify prof
     *   Community-based filtering for **Dealabs** and **Avenue de la brique**.
     *   Profitability analysis comparing retail prices vs. Vinted market values.
 
-### ? Workshop 2: Interactive Pro Dashboard
+### ✅ Workshop 2: Interactive Pro Dashboard
 *   **Location**: `client/v2/`
 *   **Objective**: Built a professional, responsive E-commerce style dashboard.
 *   **Key Features**:
     *   **Pro UI/UX**: Sticky navigation, search bar, and modern grid layout using CSS variables and Flexbox/Grid.
-    *   **Smart Filters**: Toggleable "Big Deals" (20%+), "Popular" (5+ comments), and "Hot" (100�+) filters.
+    *   **Smart Filters**: Toggleable "Big Deals" (20%+), "Popular" (5+ comments), and "Hot" (100°+) filters.
     *   **Market Intelligence**: Real-time Vinted data integration (p5, p25, and Median price indicators).
     *   **Favorites System**: Persistence layer using `localStorage` to save and track specific deals.
     *   **Live Search**: Instant filtering by Set Name or Reference ID.
 
-### ? Workshop 3: Node.js Web Scraper
+### ✅ Workshop 3: Node.js Web Scraper
 *   **Location**: `server/`
 *   **Objective**: Developed a robust backend scraping engine using Node.js.
 *   **Key Features**:
@@ -38,7 +38,7 @@ This project is a complete, end-to-end web application designed to identify prof
 
 ---
 
-## ??? How to Run
+## 🚀 How to Run
 
 ### 1. The Dashboard (Frontend)
 Simply open the following file in any modern web browser:
@@ -54,7 +54,7 @@ node sandbox.js
 
 ---
 
-## ?? Technical Stack
+## 🛠 Technical Stack
 *   **Frontend**: HTML5, CSS3 (Modern Grid/Flex), JavaScript (ES6+), FontAwesome.
 *   **Backend**: Node.js, Cheerio (Web Scraping).
 *   **Data**: JSON, LocalStorage API.
@@ -63,7 +63,7 @@ node sandbox.js
 
 With [inception](https://github.com/92bondstreet/inception?tab=readme-ov-file#%EF%B8%8F-the-3-themes) themes, we'll follow next workshops to solve our problem:
 
-| Step | Workshops | Planned Date
+| Step | Workshops | Planned Date
 | --- | --- | ---
 | 0 | [Craft an effective prototype](./workshops/0-craft-your-conviction.md) | Jan 2025
 | 1 | [Manipulate data with JavaScript in the browser](./workshops/1-manipulate-javascript.md) | Feb 2025
@@ -75,3 +75,6 @@ With [inception](https://github.com/92bondstreet/inception?tab=readme-ov-file#%E
 ## 📝 Licence
 
 [Uncopyrighted](http://zenhabits.net/uncopyright/)
+
+## 🧑‍💻 Author
+**olphsc** (ESILV - Mobile Development)
