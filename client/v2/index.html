@@ -3,239 +3,175 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>?? Lego | Predictability of a lego set deal</title>
+    <title>?? Lego | Market Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
       :root {
         --primary: #2563eb;
-        --primary-hover: #1d4ed8;
-        --bg: #f8fafc;
+        --primary-light: #dbeafe;
+        --bg: #f1f5f9;
         --card-bg: #ffffff;
-        --text-main: #1e293b;
+        --text-main: #0f172a;
         --text-muted: #64748b;
         --accent: #f59e0b;
         --danger: #ef4444;
         --success: #10b981;
-        --radius: 12px;
-        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --radius: 16px;
+        --shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
       }
       * { box-sizing: border-box; }
       body {
-        font-family: 'Inter', -apple-system, sans-serif;
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         background-color: var(--bg);
         color: var(--text-main);
         margin: 0;
-        padding: 0;
-        line-height: 1.5;
+        line-height: 1.6;
       }
       header {
         background: white;
-        padding: 2rem 1rem;
+        padding: 2.5rem 1rem;
         text-align: center;
         border-bottom: 1px solid #e2e8f0;
         margin-bottom: 2rem;
       }
-      header h1 {
-        margin: 0;
-        font-size: 2.5rem;
-        font-weight: 800;
-        letter-spacing: -0.025em;
-        color: var(--primary);
-      }
-      header p { color: var(--text-muted); margin-top: 0.5rem; }
-      .container {
-        max-width: 1280px;
-        margin: 0 auto;
-        padding: 0 1.5rem 3rem;
-      }
-      .grid-layout {
-        display: grid;
-        grid-template-columns: 300px 1fr;
-        gap: 2rem;
-      }
-      @media (max-width: 900px) {
-        .grid-layout { grid-template-columns: 1fr; }
-      }
-      aside {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-      }
+      header h1 { font-size: 2.5rem; margin: 0; color: var(--primary); letter-spacing: -1px; }
+      header p { color: var(--text-muted); margin-top: 0.5rem; font-weight: 500; }
+      
+      .container { max-width: 1400px; margin: 0 auto; padding: 0 2rem 4rem; }
+      
+      .dashboard { display: grid; grid-template-columns: 350px 1fr; gap: 2.5rem; }
+      @media (max-width: 1000px) { .dashboard { grid-template-columns: 1fr; } }
+
       .card {
         background: var(--card-bg);
         border-radius: var(--radius);
-        padding: 1.5rem;
+        padding: 2rem;
         box-shadow: var(--shadow);
+        margin-bottom: 2rem;
+        border: 1px solid rgba(0,0,0,0.05);
+      }
+      .card h2 { font-size: 1.25rem; margin-top: 0; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; color: var(--primary); }
+      
+      .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+      .stat-box {
+        background: #f8fafc;
+        padding: 1.25rem;
+        border-radius: 12px;
+        text-align: center;
         border: 1px solid #e2e8f0;
-      }
-      .card h2 {
-        margin: 0 0 1.25rem;
-        font-size: 1.25rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-      .indicator {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid #f1f5f9;
-      }
-      .indicator:last-child { border-bottom: none; }
-      .indicator label { color: var(--text-muted); font-size: 0.875rem; }
-      .indicator span { font-weight: 600; color: var(--text-main); }
-
-      .control-group { margin-bottom: 1.25rem; }
-      .control-group label {
-        display: block;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        font-size: 0.875rem;
-      }
-      select {
-        width: 100%;
-        padding: 0.625rem;
-        border-radius: 8px;
-        border: 1px solid #cbd5e1;
-        background-color: white;
-        font-size: 0.875rem;
-        cursor: pointer;
-      }
-      .filter-btns {
         display: flex;
         flex-direction: column;
-        gap: 0.75rem;
+        justify-content: center;
+        min-height: 90px;
       }
+      .stat-label { display: block; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: 0.05em; }
+      .stat-value { font-size: 1.25rem; font-weight: 800; color: var(--text-main); display: block; }
+      .stat-value.highlight { color: var(--primary); }
+
+      .control-group { margin-bottom: 1.5rem; }
+      .control-group label { display: block; font-weight: 700; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-main); }
+      select { width: 100%; padding: 0.8rem; border-radius: 10px; border: 2px solid #e2e8f0; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; background-color: white; }
+      select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px var(--primary-light); }
+
+      .filter-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
       .btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        padding: 0.625rem 1rem;
-        border-radius: 8px;
-        border: 1px solid #e2e8f0;
-        background: white;
-        cursor: pointer;
-        font-weight: 600;
-        font-size: 0.875rem;
-        transition: all 0.2s;
-        text-align: left;
+        padding: 0.75rem; border-radius: 10px; border: 2px solid #e2e8f0; background: white;
+        cursor: pointer; font-weight: 700; font-size: 0.85rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; color: var(--text-muted);
       }
-      .btn:hover { background: #f8fafc; border-color: #cbd5e1; }
-      .btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+      .btn:hover { border-color: var(--primary); color: var(--primary); background: #f8fafc; }
+      .btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.4); }
 
-      #deals-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 1.5rem;
-      }
+      #deals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; }
       .deal-card {
-        background: white;
-        border-radius: var(--radius);
-        overflow: hidden;
-        border: 1px solid #e2e8f0;
-        transition: transform 0.2s, box-shadow 0.2s;
-        display: flex;
-        flex-direction: column;
+        background: white; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow);
+        transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer; border: 2px solid transparent;
+        display: flex; flex-direction: column; height: 100%;
       }
-      .deal-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+      .deal-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border-color: var(--primary-light); }
+      .deal-card.selected { border-color: var(--primary); }
+      
+      .img-container { position: relative; height: 260px; background: #fff; padding: 1.5rem; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #f1f5f9; }
+      .img-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
+      
+      .badge { position: absolute; top: 1rem; left: 1rem; background: var(--danger); color: white; padding: 0.4rem 0.75rem; border-radius: 8px; font-weight: 800; font-size: 0.8rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+      .fav-btn {
+        position: absolute; top: 1rem; right: 1rem; background: white; border: none; width: 38px; height: 38px;
+        border-radius: 50%; cursor: pointer; color: #cbd5e1; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.2s; display: flex; align-items: center; justify-content: center; z-index: 10;
       }
-      .deal-img-wrapper {
-        position: relative;
-        aspect-ratio: 4/3;
-        background: #f1f5f9;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .deal-img { max-width: 100%; max-height: 100%; object-fit: contain; }
-      .deal-badge {
-        position: absolute;
-        top: 0.75rem;
-        left: 0.75rem;
-        background: var(--danger);
-        color: white;
-        padding: 0.25rem 0.5rem;
-        border-radius: 6px;
-        font-weight: 700;
-        font-size: 0.75rem;
-      }
-      .deal-fav {
-        position: absolute;
-        top: 0.75rem;
-        right: 0.75rem;
-        background: white;
-        border: none;
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #cbd5e1;
-        transition: color 0.2s;
-        box-shadow: var(--shadow);
-      }
-      .deal-fav.is-fav { color: var(--accent); }
-      .deal-content { padding: 1.25rem; flex-grow: 1; display: flex; flex-direction: column; }
-      .deal-id { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.25rem; }
-      .deal-title {
-        font-size: 1rem;
-        font-weight: 700;
-        margin: 0 0 0.75rem;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        height: 3rem;
-        text-decoration: none;
-        color: var(--text-main);
-      }
-      .deal-title:hover { color: var(--primary); }
-      .deal-meta {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: auto;
-      }
-      .deal-price { font-size: 1.25rem; font-weight: 800; color: var(--primary); }
-      .deal-stats { display: flex; gap: 0.75rem; color: var(--text-muted); font-size: 0.75rem; }
-      .deal-stats span { display: flex; align-items: center; gap: 0.25rem; }
-      .hot { color: var(--danger); font-weight: 600; }
+      .fav-btn:hover { color: var(--accent); transform: scale(1.1); }
+      .fav-btn.is-fav { color: var(--accent); }
+
+      .content { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; }
+      .deal-id { font-size: 0.75rem; font-weight: 800; color: var(--text-muted); margin-bottom: 0.5rem; letter-spacing: 0.05em; }
+      .deal-title { font-size: 1rem; font-weight: 700; margin: 0 0 1rem; line-height: 1.5; color: var(--text-main); height: 3rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+      .footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 1rem; border-top: 1px solid #f1f5f9; }
+      .price { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
+      .meta { display: flex; gap: 0.8rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; }
+      .meta span { display: flex; align-items: center; gap: 0.3rem; }
+      .fire { color: var(--danger); }
+      
+      #market-loading { color: var(--primary); font-weight: 600; }
     </style>
   </head>
   <body>
     <header>
       <div class="container">
-        <h1><i class="fas fa-cubes"></i> LEGO DEALS</h1>
-        <p>Find the best prices for your favorite building blocks</p>
+        <h1><i class="fas fa-cubes"></i> LEGO INSIGHTS</h1>
+        <p>Advanced Market Analysis & Deal Tracker</p>
       </div>
     </header>
 
     <main class="container">
-      <div class="grid-layout">
+      <div class="dashboard">
         <aside>
           <div class="card">
-            <h2><i class="fas fa-chart-line"></i> Market Info</h2>
-            <div class="indicator"><label>Deals found</label><span id="nbDeals">0</span></div>
-            <div class="indicator"><label>Vinted sales</label><span id="nbSales">0</span></div>
-            <div class="indicator"><label>p5 Price</label><span id="p5Price">-</span></div>
-            <div class="indicator"><label>p25 Price</label><span id="p25Price">-</span></div>
-            <div class="indicator"><label>p50 Price</label><span id="p50Price">-</span></div>
-            <div class="indicator"><label>Market Age</label><span id="ltvPrice">-</span></div>
+            <h2><i class="fas fa-chart-line"></i> Market Stats</h2>
+            <div id="market-loading" style="display:none; text-align:center; padding: 1rem;"><i class="fas fa-circle-notch fa-spin"></i> Analyzing...</div>
+            <div id="market-stats" class="stats-grid">
+              <div class="stat-box">
+                <span class="stat-label">Deals Found</span>
+                <span id="nbDeals" class="stat-value highlight">-</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-label">Vinted Items</span>
+                <span id="nbSales" class="stat-value">-</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-label">p5 Price</span>
+                <span id="p5Price" class="stat-value">-</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-label">p25 Price</span>
+                <span id="p25Price" class="stat-value">-</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-label">Median (p50)</span>
+                <span id="p50Price" class="stat-value">-</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-label">Market Age</span>
+                <span id="ltvPrice" class="stat-value">-</span>
+              </div>
+            </div>
           </div>
 
           <div class="card">
-            <h2><i class="fas fa-sliders-h"></i> Filters</h2>
+            <h2><i class="fas fa-sliders-h"></i> Controls</h2>
             <div class="control-group">
-              <label>Lego Set ID</label>
+              <label>Jump to Set ID</label>
               <select id="lego-set-id-select"></select>
             </div>
             <div class="control-group">
-              <label>Show per page</label>
+              <label>Sorting</label>
+              <select id="sort-select">
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+                <option value="date-asc">Recent First</option>
+                <option value="date-desc">Oldest First</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label>Items per Page</label>
               <select id="show-select">
                 <option value="6">6 Items</option>
                 <option value="12">12 Items</option>
@@ -243,31 +179,20 @@
               </select>
             </div>
             <div class="control-group">
-              <label>Page Selection</label>
+              <label>Page</label>
               <select id="page-select"></select>
             </div>
-            <div class="control-group">
-              <label>Sort By</label>
-              <select id="sort-select">
-                <option value="price-asc">Price: Lowest first</option>
-                <option value="price-desc">Price: Highest first</option>
-                <option value="date-asc">Date: Newest first</option>
-                <option value="date-desc">Date: Oldest first</option>
-              </select>
-            </div>
             <div class="filter-btns">
-              <button class="btn" id="filter-discount"><i class="fas fa-tags"></i> Best Discount (50%+)</button>
-              <button class="btn" id="filter-commented"><i class="fas fa-comments"></i> Most Commented</button>
-              <button class="btn" id="filter-hot"><i class="fas fa-fire"></i> Hot Deals</button>
-              <button class="btn" id="filter-favorites"><i class="fas fa-star"></i> My Favorites</button>
+              <button class="btn" id="filter-discount"><i class="fas fa-tag"></i> 50% Off</button>
+              <button class="btn" id="filter-commented"><i class="fas fa-star"></i> Popular</button>
+              <button class="btn" id="filter-hot"><i class="fas fa-fire"></i> Hot</button>
+              <button class="btn" id="filter-favorites"><i class="fas fa-heart"></i> Favorites</button>
             </div>
           </div>
         </aside>
 
-        <section id="main-content">
-          <div id="deals-grid">
-            <!-- Deals will be injected here -->
-          </div>
+        <section>
+          <div id="deals-grid"></div>
         </section>
       </div>
     </main>
