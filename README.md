@@ -22,7 +22,11 @@ This project is a complete, end-to-end web application designed to identify prof
 *   **Objective**: Built a professional, responsive E-commerce style dashboard.
 *   **Key Features**:
     *   **Pro UI/UX**: Sticky navigation, search bar, and modern grid layout using CSS variables and Flexbox/Grid.
+<<<<<<< HEAD
     *   **Smart Filters**: Toggleable "Big Deals" (20%+), "Popular" (5+ comments), and "Hot" (100�+) filters.
+=======
+    *   **Smart Filters**: Toggleable "Big Deals" (20%+), "Popular" (5+ comments), and "Hot" (100�+) filters.
+>>>>>>> 1e175d32e9177a41be2c7f6bfdf72c78fcda4215
     *   **Market Intelligence**: Real-time Vinted data integration (p5, p25, and Median price indicators).
     *   **Favorites System**: Persistence layer using `localStorage` to save and track specific deals.
     *   **Live Search**: Instant filtering by Set Name or Reference ID.
@@ -61,6 +65,7 @@ node sandbox.js
 
 ---
 
+<<<<<<< HEAD
 With [inception](https://github.com/92bondstreet/inception?tab=readme-ov-file#%EF%B8%8F-the-3-themes) themes, we'll follow next workshops to solve our problem:
 
 | Step | Workshops | Planned Date
@@ -75,3 +80,7 @@ With [inception](https://github.com/92bondstreet/inception?tab=readme-ov-file#%E
 ## 📝 Licence
 
 [Uncopyrighted](http://zenhabits.net/uncopyright/)
+=======
+## ????? Author
+**olphsc** (ESILV - Mobile Development)
+>>>>>>> 1e175d32e9177a41be2c7f6bfdf72c78fcda4215
