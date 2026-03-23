@@ -3,12 +3,20 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 
-// We load json files as data source
-import SALES from "./sources/vinted.json" with { type: "json" };
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'url';
+import path from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 const PORT = 8092;
 
 const app = express();
+
+// We load json files as data source
+let SALES = {};
+let DEALS = [];
 
 app.use(bodyParser.json());
 app.use(cors());
@@ -17,6 +25,56 @@ app.use(cors())
 
 app.get('/', (request, response) => {
   response.send({'ack': true});
+});
+
+app.get('/deals/search', (request, response) => {
+  try {
+    const { limit = 12, price, date, filterBy } = request.query;
+
+    let result = [...DEALS];
+
+    if (price) {
+      result = result.filter(d => d.price <= parseFloat(price));
+    }
+
+    if (date) {
+      const timestamp = new Date(date).getTime() / 1000;
+      result = result.filter(d => d.published >= timestamp);
+    }
+
+    if (filterBy === 'best-discount') {
+      result = result.filter(d => d.discount >= 50);
+    } else if (filterBy === 'most-commented') {
+      result = result.filter(d => d.comments >= 5);
+    }
+
+    result.sort((a, b) => a.price - b.price);
+    result = result.slice(0, parseInt(limit));
+
+    return response.status(200).json({
+      'limit': parseInt(limit),
+      'total': result.length,
+      'results': result
+    });
+  } catch (error) {
+    console.log(error);
+    return response.status(500).json({ 'success': false });
+  }
+});
+
+app.get('/deals/:id', (request, response) => {
+  try {
+    const deal = DEALS.find(d => d.uuid === request.params.id);
+
+    if (!deal) {
+      return response.status(404).json({ 'success': false, 'message': 'Deal not found' });
+    }
+
+    return response.status(200).json({ 'success': true, 'data': deal });
+  } catch (error) {
+    console.log(error);
+    return response.status(500).json({ 'success': false });
+  }
 });
 
 app.get('/sales/search', (request, response) => {
@@ -46,6 +104,23 @@ app.get('/sales/search', (request, response) => {
 });
 
 
-app.listen(PORT)
+app.listen(PORT, () => {
+  // when we start the server we load available json files
+  try {
+    SALES = JSON.parse(
+      readFileSync(path.join(__dirname, 'sources', 'vinted.json'), 'utf8')
+    );
+  } catch (error) {
+    console.warn(`⚠️  ${error}`);
+  }
+
+  try {
+    DEALS = JSON.parse(
+      readFileSync(path.join(__dirname, 'deals.json'), 'utf8')
+    );
+  } catch (error) {
+    console.warn(`⚠️  ${error}`);
+  }
+})
 
 console.log(`📡 Running on port ${PORT}`);
