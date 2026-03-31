@@ -89,7 +89,7 @@ const renderDeals = () => {
     dealsGrid.innerHTML = dealsToRender.map(deal => {
         const isFav = favorites.some(fav => fav.uuid === deal.uuid);
         // Remote API uses .id or we extract from title
-        const legoId = deal.id || "N/A";
+        const legoId = deal.id || deal.title.match(/\b(\d{4,6})\b/)?.[1] || "N/A";
         const isSelected = selectedId === legoId ? "selected" : "";
         const temp = Math.round(deal.temperature || 0);
         
@@ -183,7 +183,7 @@ const loadPage = async (page) => {
     nextBtn.disabled = currentPagination.currentPage === currentPagination.pageCount;
     renderDeals();
     if (allDeals.length > 0 && !selectedId) {
-        updateMarketInfo(allDeals[0].id || "N/A");
+        updateMarketInfo(allDeals[0].id || allDeals[0].title.match(/\b(\d{4,6})\b/)?.[1] || "N/A");
     }
 };
 
@@ -193,7 +193,7 @@ const populateIdDropdown = async () => {
         const body = await response.json();
         if (body.success) {
             const idSet = new Set();
-            body.data.result.forEach(d => { if (d.id) idSet.add(d.id); });
+            body.data.result.forEach(d => { const id = d.id || d.title.match(/\b(\d{4,6})\b/)?.[1]; if (id) idSet.add(id); });
             legoIdSelect.innerHTML = '<option value="">Search by LEGO Set ID...</option>';
             Array.from(idSet).sort().forEach(id => {
                 const opt = document.createElement("option");
