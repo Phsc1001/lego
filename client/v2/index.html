@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🧱 LEGO Insights | Pro Dashboard</title>
+    <title>?? LEGO Insights | Pro Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -35,7 +35,7 @@
         }
         .nav-container { max-width: 1400px; margin: 0 auto; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
         .logo { display: flex; align-items: center; gap: 0.75rem; color: var(--primary); font-weight: 800; font-size: 1.5rem; text-decoration: none; min-width: max-content; }
-
+        
         .search-bar { flex-grow: 1; max-width: 600px; position: relative; }
         .search-bar i { position: absolute; left: 1.25rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
         .search-input {
@@ -47,7 +47,7 @@
         /* Filter Toolbar */
         .toolbar { background: white; border-bottom: 1px solid #e2e8f0; padding: 1rem 0; }
         .tool-container { max-width: 1400px; margin: 0 auto; padding: 0 2rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
-
+        
         .filter-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
         .filter-btn {
             padding: 0.625rem 1.25rem; border-radius: var(--radius-md); border: 2px solid #f1f5f9;
@@ -56,59 +56,61 @@
         }
         .filter-btn:hover { border-color: var(--primary); color: var(--primary); }
         .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
-
+        
         .divider { width: 2px; height: 24px; background: #e2e8f0; margin: 0 0.5rem; }
-
+        
         .sort-select { padding: 0.625rem 2.5rem 0.625rem 1rem; border-radius: var(--radius-md); border: 2px solid #f1f5f9; background: white; font-weight: 600; cursor: pointer; color: var(--text-main); }
 
         /* Main Content Grid */
-        .main-container { max-width: 1400px; margin: 2rem auto; padding: 0 2rem; display: grid; grid-template-columns: 1fr 350px; gap: 2.5rem; }
+        .main-container { max-width: 1400px; margin: 2rem auto; padding: 0 2rem; display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem; align-items: start; }
         @media (max-width: 1100px) { .main-container { grid-template-columns: 1fr; } }
 
-        #deals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem; }
+        #deals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
 
         .deal-card {
-            background: white; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid #e2e8f0;
+            background: white; border-radius: var(--radius-md); overflow: hidden; border: 1px solid #e2e8f0;
             transition: var(--transition); display: flex; flex-direction: column; cursor: pointer; position: relative;
         }
-        .deal-card:hover { transform: translateY(-8px); box-shadow: var(--shadow); border-color: var(--primary-light); }
+        .deal-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); border-color: var(--primary-light); }
         .deal-card.selected { border: 2px solid var(--primary); box-shadow: 0 0 0 4px var(--primary-light); }
 
-        .image-box { position: relative; height: 280px; background: white; padding: 1.5rem; display: flex; align-items: center; justify-content: center; }
+        .image-box { position: relative; height: 220px; background: white; padding: 1rem; display: flex; align-items: center; justify-content: center; }
         .image-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
-
-        .discount-tag { position: absolute; top: 1.25rem; left: 1.25rem; background: var(--danger); color: white; padding: 0.5rem 0.75rem; border-radius: 0.75rem; font-weight: 800; font-size: 0.875rem; }
+        
+        .discount-tag { position: absolute; top: 0.75rem; left: 0.75rem; background: var(--danger); color: white; padding: 0.35rem 0.6rem; border-radius: 0.5rem; font-weight: 800; font-size: 0.75rem; }
         .fav-btn {
-            position: absolute; top: 1.25rem; right: 1.25rem; width: 44px; height: 44px; border-radius: 50%;
-            background: white; border: none; box-shadow: var(--shadow); cursor: pointer; transition: var(--transition);
-            display: flex; align-items: center; justify-content: center; color: #cbd5e1; font-size: 1.25rem;
+            position: absolute; top: 0.75rem; right: 0.75rem; width: 36px; height: 36px; border-radius: 50%;
+            background: white; border: none; box-shadow: var(--shadow-sm); cursor: pointer; transition: var(--transition);
+            display: flex; align-items: center; justify-content: center; color: #cbd5e1; font-size: 1rem;
         }
         .fav-btn:hover { transform: scale(1.1); color: var(--accent); }
         .fav-btn.is-fav { color: var(--accent); }
 
-        .card-body { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; }
-        .card-ref { font-size: 0.75rem; font-weight: 800; color: var(--text-muted); letter-spacing: 0.1em; margin-bottom: 0.5rem; text-transform: uppercase; }
-        .card-title { font-size: 1.125rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.5rem; line-height: 1.5; height: 3.3rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-
-        .card-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; border-top: 1px solid #f1f5f9; padding-top: 1.25rem; }
+        .card-body { padding: 1rem; flex-grow: 1; display: flex; flex-direction: column; }
+        .card-ref { font-size: 0.65rem; font-weight: 800; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 0.25rem; text-transform: uppercase; }
+        .card-title { font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; line-height: 1.4; height: 2.8rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        
+        .card-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; border-top: 1px solid #f1f5f9; padding-top: 1rem; }
         .card-price { display: flex; flex-direction: column; }
-        .price-label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
-        .price-value { font-size: 1.75rem; font-weight: 800; color: var(--primary); }
+        .price-label { font-size: 0.65rem; font-weight: 600; color: var(--text-muted); }
+        .price-value { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
 
-        .card-stats { display: flex; gap: 1rem; color: var(--text-muted); font-size: 0.875rem; font-weight: 700; }
-        .stat-item { display: flex; align-items: center; gap: 0.35rem; }
+        .card-stats { display: flex; gap: 0.75rem; color: var(--text-muted); font-size: 0.75rem; font-weight: 700; }
+        .stat-item { display: flex; align-items: center; gap: 0.25rem; }
         .stat-item.hot { color: var(--danger); }
 
         /* Market Sidebar */
-        .sidebar { position: sticky; top: 6rem; height: max-content; }
-        .market-card { background: white; border-radius: var(--radius-lg); padding: 2rem; border: 1px solid #e2e8f0; box-shadow: var(--shadow-sm); }
-        .market-card h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; }
-
-        .stats-list { display: grid; gap: 1rem; }
-        .stat-row { background: #f8fafc; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; }
-        .row-label { font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
-        .row-value { font-size: 1.5rem; font-weight: 800; color: var(--text-main); }
+        .sidebar { position: sticky; top: 6rem; height: auto; }
+        .market-card { background: white; border-radius: var(--radius-md); padding: 1.25rem; border: 1px solid #e2e8f0; box-shadow: var(--shadow-sm); }
+        .market-card h2 { font-size: 1.125rem; font-weight: 800; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; color: var(--primary); }
+        
+        .stats-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+        .stat-row { background: #f8fafc; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .stat-row.full { grid-column: 1 / -1; }
+        .row-label { font-size: 0.6rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.25rem; }
+        .row-value { font-size: 1.125rem; font-weight: 800; color: var(--text-main); }
         .row-value.blue { color: var(--primary); }
+
 
         /* Pagination Area */
         .pagination { max-width: 1400px; margin: 3rem auto; padding: 0 2rem; display: flex; align-items: center; justify-content: center; gap: 2rem; }
@@ -130,9 +132,15 @@
                 <i class="fas fa-search"></i>
                 <input type="text" class="search-input" id="search-input" placeholder="Search by name or set ID (e.g. 75333)...">
             </div>
-            <div style="min-width: 100px; text-align: right;">
-                <span id="items-count" style="font-weight: 800; color: var(--primary);">0</span>
-                <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); display: block;">DEALS FOUND</span>
+            <div style="min-width: 250px; text-align: right; display: flex; gap: 1.5rem; justify-content: flex-end;">
+                <div>
+                    <span id="items-count" style="font-weight: 800; color: var(--primary);">0</span>
+                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); display: block;">MATCHES</span>
+                </div>
+                <div style="border-left: 2px solid #e2e8f0; padding-left: 1.5rem;">
+                    <span id="total-scraped" style="font-weight: 800; color: var(--text-main);">0</span>
+                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); display: block;">TOTAL DEALS</span>
+                </div>
             </div>
         </div>
     </nav>
@@ -140,7 +148,7 @@
     <div class="toolbar">
         <div class="tool-container">
             <div class="filter-group">
-                <button class="filter-btn" id="filter-discount"><i class="fas fa-percent"></i> Big Deals</button>
+                <button class="filter-btn" id="filter-discount" title="Deals with >20% discount"><i class="fas fa-percent"></i> Big Deals</button>
                 <button class="filter-btn" id="filter-commented"><i class="fas fa-comments"></i> Popular</button>
                 <button class="filter-btn" id="filter-hot"><i class="fas fa-fire"></i> Hot Deals</button>
                 <button class="filter-btn" id="filter-favorites"><i class="fas fa-heart"></i> Favorites</button>
@@ -148,6 +156,7 @@
             <div class="divider"></div>
             <div class="filter-group">
                 <select class="sort-select" id="sort-select">
+                    <option value="">Default Sort</option>
                     <option value="price-asc">Price: Low to High</option>
                     <option value="price-desc">Price: High to Low</option>
                     <option value="date-asc">Recent First</option>
@@ -164,18 +173,19 @@
 
     <main class="main-container">
         <section id="deals-grid"></section>
-
+        
         <aside class="sidebar">
             <div class="market-card">
                 <h2><i class="fas fa-chart-line"></i> Market Intelligence</h2>
-                <div id="market-loading" style="display:none; text-align:center; padding: 2rem; color: var(--primary); font-weight: 700;">
-                    <i class="fas fa-circle-notch fa-spin"></i> Analyzing...
+                <div id="market-loading" style="display:none; text-align:center; padding: 1rem; color: var(--primary); font-weight: 700;">
+                    <i class="fas fa-circle-notch fa-spin"></i>
                 </div>
                 <div id="market-stats" class="stats-list">
-                    <div class="stat-row">
+                    <div class="stat-row full">
                         <span class="row-label">Selected Set</span>
                         <span id="selected-set-id" class="row-value blue">None</span>
                     </div>
+
                     <div class="stat-row">
                         <span class="row-label">Vinted Items</span>
                         <span id="nbSales" class="row-value">-</span>
@@ -203,7 +213,10 @@
 
     <div class="pagination">
         <button class="pag-btn" id="prev-btn" disabled><i class="fas fa-chevron-left"></i></button>
-        <span class="pag-info">Page <span id="current-page">1</span> of <span id="total-pages">1</span></span>
+        <div class="pag-info" style="text-align: center;">
+            <div id="pag-range" style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Showing 0-0 of 0</div>
+            <div style="font-weight: 800;">Page <span id="current-page">1</span> of <span id="total-pages">1</span></div>
+        </div>
         <button class="pag-btn" id="next-btn"><i class="fas fa-chevron-right"></i></button>
     </div>
 
