@@ -111,4 +111,4 @@ app.get('/sales/search', async (req, res) => {
     res.json({ success: true, data: { result } });
 });
 
-app.listen(PORT, () => console.log(`📡 Dashboard API ready at http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Dashboard API ready at http://localhost:${PORT}`));

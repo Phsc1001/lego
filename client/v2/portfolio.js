@@ -27,7 +27,7 @@ const activeFilters = {
 };
 
 /**
- * FETCH DEALS FROM REMOTE API
+ * Fetch deals from API
  */
 const fetchDeals = async (page = 1, size = 12) => {
     try {
