@@ -20,6 +20,7 @@ const activeFilters = {
 const dealsGrid = document.querySelector("#deals-grid");
 const searchInput = document.querySelector("#search-input");
 const itemsCount = document.querySelector("#items-count");
+const totalScrapedSpan = document.querySelector("#total-scraped");
 const prevBtn = document.querySelector("#prev-btn");
 const nextBtn = document.querySelector("#next-btn");
 const currentPageSpan = document.querySelector("#current-page");
@@ -40,12 +41,29 @@ const marketLoading = document.querySelector("#market-loading");
  */
 const fetchDeals = async (page = 1, size = 12) => {
     try {
-        const response = await fetch(`https://lego-api-blue.vercel.app/deals?page=${page}&size=${size}`);
+        let url = `https://lego-api-blue.vercel.app/deals?page=${page}&size=${size}`;
+        
+        // Map local filters to API filters
+        if (activeFilters.discount) url += `&filterBy=best-discount`;
+        else if (activeFilters.commented) url += `&filterBy=most-commented`;
+        else if (activeFilters.hot) url += `&filterBy=hot-deals`;
+        
+        if (activeFilters.search) url += `&search=${encodeURIComponent(activeFilters.search)}`;
+
+        const response = await fetch(url);
         const body = await response.json();
-        return body.success ? body.data : { result: [], meta: {} };
+        
+        // Update Total Scraped once if not already set
+        if (totalScrapedSpan.innerText === "0" && body.success) {
+            const initialFetch = await fetch(`https://lego-api-blue.vercel.app/deals?size=1`);
+            const initialBody = await initialFetch.json();
+            totalScrapedSpan.innerText = initialBody.data.meta.count;
+        }
+
+        return body.success ? body.data : { result: [], meta: { count: 0, pageCount: 0, currentPage: 1, pageSize: size } };
     } catch (e) {
         console.error("Fetch Error:", e);
-        return { result: [], meta: {} };
+        return { result: [], meta: { count: 0, pageCount: 0, currentPage: 1, pageSize: size } };
     }
 };
 
@@ -71,24 +89,34 @@ const fetchSales = async (id) => {
 const applyFilters = () => {
     let result = activeFilters.favorites ? [...favorites] : [...allDeals];
 
-    if (activeFilters.discount) result = result.filter(d => (d.discount || 0) >= 20);
-    if (activeFilters.commented) result = result.filter(d => (d.comments || 0) >= 5);
-    if (activeFilters.hot) result = result.filter(d => (d.temperature || 0) >= 100);
-    
+    // Search (ID or Title)
     if (activeFilters.search) {
         const query = activeFilters.search.toLowerCase();
         result = result.filter(d => 
             d.title.toLowerCase().includes(query) || 
-            d.id.toString().includes(query)
+            (d.id && d.id.toString().includes(query))
         );
     }
 
-    // Sort
+    // Sort Logic
     const sortType = document.querySelector("#sort-select").value;
-    if (sortType === "price-asc") result.sort((a,b) => a.price - b.price);
-    if (sortType === "price-desc") result.sort((a,b) => b.price - a.price);
-    if (sortType === "date-asc") result.sort((a,b) => new Date(b.published * 1000) - new Date(a.published * 1000));
-    if (sortType === "date-desc") result.sort((a,b) => new Date(a.published * 1000) - new Date(b.published * 1000));
+
+    if (sortType) {
+        // Use manual sort if selected (not empty)
+        if (sortType === "price-asc") result.sort((a,b) => a.price - b.price);
+        else if (sortType === "price-desc") result.sort((a,b) => b.price - a.price);
+        else if (sortType === "date-asc") result.sort((a,b) => new Date(b.published * 1000) - new Date(a.published * 1000));
+        else if (sortType === "date-desc") result.sort((a,b) => new Date(a.published * 1000) - new Date(b.published * 1000));
+    } else {
+        // Fallback to filter-specific natural sort if no manual sort is selected
+        if (activeFilters.discount) {
+            result.sort((a, b) => (b.discount || 0) - (a.discount || 0));
+        } else if (activeFilters.commented) {
+            result.sort((a, b) => (b.comments || 0) - (a.comments || 0));
+        } else if (activeFilters.hot) {
+            result.sort((a, b) => (b.temperature || 0) - (a.temperature || 0));
+        }
+    }
 
     filteredDeals = result;
     renderDeals();
@@ -98,7 +126,24 @@ const applyFilters = () => {
  * Rendering
  */
 const renderDeals = () => {
-    itemsCount.innerText = filteredDeals.length;
+    const totalCount = activeFilters.favorites ? favorites.length : (currentPagination.count || 0);
+    itemsCount.innerText = totalCount;
+
+    // Update pagination range
+    const pagRange = document.querySelector("#pag-range");
+    if (activeFilters.favorites) {
+        pagRange.innerText = `Showing all ${favorites.length} favorites`;
+    } else if (totalCount > 0) {
+        const start = (currentPagination.currentPage - 1) * currentPagination.pageSize + 1;
+        const end = Math.min(currentPagination.currentPage * currentPagination.pageSize, currentPagination.count);
+        pagRange.innerText = `Showing ${start}-${end} of ${currentPagination.count} deals`;
+    } else {
+        pagRange.innerText = "No deals found";
+    }
+
+    // Fix the "Page 1 of 5" bug when no results
+    currentPageSpan.innerText = totalCount > 0 ? currentPagination.currentPage : 0;
+    totalPagesSpan.innerText = totalCount > 0 ? (currentPagination.pageCount || 1) : 0;
     
     if (filteredDeals.length === 0) {
         dealsGrid.innerHTML = `
@@ -201,10 +246,11 @@ const loadPage = async (page) => {
     allDeals = data.result;
     currentPagination = data.meta;
     
-    currentPageSpan.innerText = currentPagination.currentPage;
-    totalPagesSpan.innerText = currentPagination.pageCount;
-    prevBtn.disabled = currentPagination.currentPage === 1;
-    nextBtn.disabled = currentPagination.currentPage === currentPagination.pageCount;
+    const totalCount = activeFilters.favorites ? favorites.length : (currentPagination.count || 0);
+    currentPageSpan.innerText = totalCount > 0 ? currentPagination.currentPage : 0;
+    totalPagesSpan.innerText = totalCount > 0 ? (currentPagination.pageCount || 1) : 0;
+    prevBtn.disabled = currentPagination.currentPage === 1 || totalCount === 0;
+    nextBtn.disabled = currentPagination.currentPage === currentPagination.pageCount || currentPagination.pageCount === 0;
 
     applyFilters();
     if (allDeals.length > 0 && !selectedId) updateMarketInfo(allDeals[0].id);
@@ -213,14 +259,24 @@ const loadPage = async (page) => {
 // Listeners
 searchInput.addEventListener("input", (e) => {
     activeFilters.search = e.target.value;
-    applyFilters();
+    loadPage(1); // Re-fetch on search
 });
 
 const setupToggle = (btnId, filterKey) => {
     document.querySelector(`#${btnId}`).addEventListener("click", (e) => {
-        activeFilters[filterKey] = !activeFilters[filterKey];
+        // Toggle the active filter and deactivate others (except favorites)
+        const wasActive = activeFilters[filterKey];
+        if (filterKey !== 'favorites') {
+            activeFilters.discount = false;
+            activeFilters.commented = false;
+            activeFilters.hot = false;
+            document.querySelectorAll(".filter-btn:not(#filter-favorites)").forEach(b => b.classList.remove("active"));
+        }
+        
+        activeFilters[filterKey] = !wasActive;
         e.currentTarget.classList.toggle("active", activeFilters[filterKey]);
-        applyFilters();
+        
+        loadPage(1); // Re-fetch from page 1 whenever a filter is changed
     });
 };
 

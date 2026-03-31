@@ -123,4 +123,4 @@ app.listen(PORT, () => {
   }
 })
 
-console.log(`📡 Running on port ${PORT}`);
+console.log(`📡 Running on port http://localhost:${PORT}`);
