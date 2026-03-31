@@ -31,7 +31,7 @@ const activeFilters = {
  */
 const fetchDeals = async (page = 1, size = 12) => {
     try {
-        let url = `https://lego-api-blue.vercel.app/deals?page=${page}&size=${size}`;
+        let url = `https://server-fawn-omega-23.vercel.app/deals?page=${page}&size=${size}`;
         
         // Remote API filter mapping
         if (activeFilters.discount) url += `&filterBy=best-discount`;
@@ -62,7 +62,7 @@ const fetchSales = async (id) => {
     try {
         marketStats.style.opacity = "0.2";
         marketLoading.style.display = "block";
-        const response = await fetch(`https://lego-api-blue.vercel.app/sales?id=${id}`);
+        const response = await fetch(`https://server-fawn-omega-23.vercel.app/sales/search?legoSetId=${id}`);
         const body = await response.json();
         marketStats.style.opacity = "1";
         marketLoading.style.display = "none";
@@ -189,7 +189,7 @@ const loadPage = async (page) => {
 
 const populateIdDropdown = async () => {
     try {
-        const response = await fetch("https://lego-api-blue.vercel.app/deals?size=100");
+        const response = await fetch("https://server-fawn-omega-23.vercel.app/deals?size=100");
         const body = await response.json();
         if (body.success) {
             const idSet = new Set();
