@@ -1,32 +1,13 @@
 "use strict";
 
-// Global State
-let allDeals = []; // Data from current page
-let filteredDeals = []; // Data after filters applied
-let currentPagination = {};
-let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
-let selectedId = null;
-
-// Filter State
-const activeFilters = {
-    discount: false,
-    commented: false,
-    hot: false,
-    favorites: false,
-    search: ""
-};
-
 // Selectors
 const dealsGrid = document.querySelector("#deals-grid");
-const searchInput = document.querySelector("#search-input");
-const itemsCount = document.querySelector("#items-count");
-const totalScrapedSpan = document.querySelector("#total-scraped");
+const legoIdSelect = document.querySelector("#lego-id-select");
+const totalCountSpan = document.querySelector("#total-count");
 const prevBtn = document.querySelector("#prev-btn");
 const nextBtn = document.querySelector("#next-btn");
 const currentPageSpan = document.querySelector("#current-page");
 const totalPagesSpan = document.querySelector("#total-pages");
-
-// Sidebar Selectors
 const spanSelectedId = document.querySelector("#selected-set-id");
 const spanNbSales = document.querySelector("#nbSales");
 const spanP5 = document.querySelector("#p5Price");
@@ -36,14 +17,23 @@ const spanLTV = document.querySelector("#ltvPrice");
 const marketStats = document.querySelector("#market-stats");
 const marketLoading = document.querySelector("#market-loading");
 
+let allDeals = []; 
+let currentPagination = {};
+let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+let selectedId = null;
+
+const activeFilters = {
+    discount: false, commented: false, hot: false, favorites: false, search: ""
+};
+
 /**
- * Fetch Data
+ * FETCH DEALS FROM REMOTE API
  */
 const fetchDeals = async (page = 1, size = 12) => {
     try {
         let url = `https://lego-api-blue.vercel.app/deals?page=${page}&size=${size}`;
         
-        // Map local filters to API filters
+        // Remote API filter mapping
         if (activeFilters.discount) url += `&filterBy=best-discount`;
         else if (activeFilters.commented) url += `&filterBy=most-commented`;
         else if (activeFilters.hot) url += `&filterBy=hot-deals`;
@@ -53,22 +43,22 @@ const fetchDeals = async (page = 1, size = 12) => {
         const response = await fetch(url);
         const body = await response.json();
         
-        // Update Total Scraped once if not already set
-        if (totalScrapedSpan.innerText === "0" && body.success) {
-            const initialFetch = await fetch(`https://lego-api-blue.vercel.app/deals?size=1`);
-            const initialBody = await initialFetch.json();
-            totalScrapedSpan.innerText = initialBody.data.meta.count;
+        if (body.success) {
+            totalCountSpan.innerText = body.data.meta.count;
+            return body.data;
         }
-
-        return body.success ? body.data : { result: [], meta: { count: 0, pageCount: 0, currentPage: 1, pageSize: size } };
+        return { result: [], meta: { count: 0, pageCount: 1, currentPage: 1, pageSize: size } };
     } catch (e) {
         console.error("Fetch Error:", e);
-        return { result: [], meta: { count: 0, pageCount: 0, currentPage: 1, pageSize: size } };
+        return { result: [], meta: { count: 0, pageCount: 1, currentPage: 1, pageSize: size } };
     }
 };
 
+/**
+ * FETCH SALES FROM REMOTE API
+ */
 const fetchSales = async (id) => {
-    if (!id) return [];
+    if (!id || id === "N/A") return [];
     try {
         marketStats.style.opacity = "0.2";
         marketLoading.style.display = "block";
@@ -76,111 +66,54 @@ const fetchSales = async (id) => {
         const body = await response.json();
         marketStats.style.opacity = "1";
         marketLoading.style.display = "none";
-        return body.success ? body.data.result : [];
+        return (body.success && body.data) ? body.data.result : [];
     } catch (e) {
         console.error("Sales Error:", e);
+        marketLoading.style.display = "none";
         return [];
     }
 };
 
-/**
- * Filter & Logic
- */
-const applyFilters = () => {
-    let result = activeFilters.favorites ? [...favorites] : [...allDeals];
-
-    // Search (ID or Title)
-    if (activeFilters.search) {
-        const query = activeFilters.search.toLowerCase();
-        result = result.filter(d => 
-            d.title.toLowerCase().includes(query) || 
-            (d.id && d.id.toString().includes(query))
-        );
-    }
-
-    // Sort Logic
-    const sortType = document.querySelector("#sort-select").value;
-
-    if (sortType) {
-        // Use manual sort if selected (not empty)
-        if (sortType === "price-asc") result.sort((a,b) => a.price - b.price);
-        else if (sortType === "price-desc") result.sort((a,b) => b.price - a.price);
-        else if (sortType === "date-asc") result.sort((a,b) => new Date(b.published * 1000) - new Date(a.published * 1000));
-        else if (sortType === "date-desc") result.sort((a,b) => new Date(a.published * 1000) - new Date(b.published * 1000));
-    } else {
-        // Fallback to filter-specific natural sort if no manual sort is selected
-        if (activeFilters.discount) {
-            result.sort((a, b) => (b.discount || 0) - (a.discount || 0));
-        } else if (activeFilters.commented) {
-            result.sort((a, b) => (b.comments || 0) - (a.comments || 0));
-        } else if (activeFilters.hot) {
-            result.sort((a, b) => (b.temperature || 0) - (a.temperature || 0));
-        }
-    }
-
-    filteredDeals = result;
-    renderDeals();
-};
-
-/**
- * Rendering
- */
 const renderDeals = () => {
+    const dealsToRender = activeFilters.favorites ? favorites : allDeals;
     const totalCount = activeFilters.favorites ? favorites.length : (currentPagination.count || 0);
-    itemsCount.innerText = totalCount;
-
-    // Update pagination range
-    const pagRange = document.querySelector("#pag-range");
-    if (activeFilters.favorites) {
-        pagRange.innerText = `Showing all ${favorites.length} favorites`;
-    } else if (totalCount > 0) {
-        const start = (currentPagination.currentPage - 1) * currentPagination.pageSize + 1;
-        const end = Math.min(currentPagination.currentPage * currentPagination.pageSize, currentPagination.count);
-        pagRange.innerText = `Showing ${start}-${end} of ${currentPagination.count} deals`;
-    } else {
-        pagRange.innerText = "No deals found";
-    }
-
-    // Fix the "Page 1 of 5" bug when no results
+    
     currentPageSpan.innerText = totalCount > 0 ? currentPagination.currentPage : 0;
     totalPagesSpan.innerText = totalCount > 0 ? (currentPagination.pageCount || 1) : 0;
     
-    if (filteredDeals.length === 0) {
-        dealsGrid.innerHTML = `
-            <div style="grid-column: 1/-1; text-align: center; padding: 5rem 0;">
-                <i class="fas fa-ghost" style="font-size: 4rem; color: #cbd5e1; margin-bottom: 2rem; display: block;"></i>
-                <h2 style="color: var(--text-muted);">No deals found matching your search.</h2>
-            </div>`;
+    if (dealsToRender.length === 0) {
+        dealsGrid.innerHTML = `<div class="empty-state" style="grid-column: 1/-1; text-align:center; padding: 5rem;"><i class="fas fa-ghost" style="font-size: 3rem; opacity: 0.2;"></i><h2>No deals found</h2></div>`;
         return;
     }
 
-    dealsGrid.innerHTML = filteredDeals.map(deal => {
+    dealsGrid.innerHTML = dealsToRender.map(deal => {
         const isFav = favorites.some(fav => fav.uuid === deal.uuid);
-        const isSelected = selectedId === deal.id ? "selected" : "";
+        // Remote API uses .id or we extract from title
+        const legoId = deal.id || "N/A";
+        const isSelected = selectedId === legoId ? "selected" : "";
+        const temp = Math.round(deal.temperature || 0);
+        
+        // Remote API uses .photo
+        const imgSrc = deal.photo || `https://placehold.co/300x300?text=LEGO+${legoId}`;
+        
         return `
-            <div class="deal-card ${isSelected}" data-id="${deal.id}" onclick="updateMarketInfo('${deal.id}')">
-                <div class="image-box">
-                    ${deal.discount ? `<div class="discount-tag">-${deal.discount}%</div>` : ""}
-                    <img src="${deal.photo || 'https://placehold.co/300x300?text=Lego'}" alt="${deal.title}">
-                    <button class="fav-btn ${isFav ? 'is-fav' : ''}" onclick="toggleFavorite(event, '${deal.uuid}')">
+            <div class="card ${isSelected}" data-id="${legoId}" onclick="updateMarketInfo('${legoId}')">
+                <div class="card-image">
+                    ${deal.discount ? `<div class="discount-badge">-${deal.discount}%</div>` : ""}
+                    <img src="${imgSrc}" alt="${deal.title}" referrerpolicy="no-referrer"
+                         onerror="this.onerror=null; this.src='https://placehold.co/300x300?text=LEGO+${legoId}';">
+                    <button class="fav-toggle ${isFav ? 'active' : ''}" style="position:absolute; top:1rem; right:1rem; border:none; background:white; width:35px; height:35px; border-radius:50%; cursor:pointer; color:${isFav ? 'var(--accent)' : '#cbd5e1'}; box-shadow:0 2px 5px rgba(0,0,0,0.1);" onclick="toggleFavorite(event, '${deal.uuid}')">
                         <i class="${isFav ? 'fas' : 'far'} fa-star"></i>
                     </button>
                 </div>
-                <div class="card-body">
-                    <div class="card-ref">REF ${deal.id}</div>
+                <div class="card-content">
+                    <div class="card-meta">SET ${legoId}</div>
                     <h3 class="card-title">${deal.title}</h3>
                     <div class="card-footer">
-                        <div class="card-price">
-                            <span class="price-label">DEALABS PRICE</span>
-                            <span class="price-value">${deal.price} \u20AC</span>
-                        </div>
+                        <div class="card-price"><span class="price-now">${deal.price} €</span></div>
                         <div class="card-stats">
-                            <span class="stat-item ${deal.temperature > 100 ? 'hot' : ''}">
-                                <i class="fas fa-fire"></i> ${Math.round(deal.temperature || 0)}&deg;
-                            </span>
-                            <span class="stat-item">
-                                <i class="fas fa-comment"></i> ${deal.comments || 0}
-                            </span>
+                            <div class="stat ${temp > 100 ? 'hot' : ''}"><i class="fas fa-fire"></i> ${temp}°</div>
+                            <div class="stat"><i class="fas fa-comment"></i> ${deal.comments || 0}</div>
                         </div>
                     </div>
                 </div>
@@ -199,33 +132,34 @@ const percentile = (arr, q) => {
 
 const renderSalesIndicators = sales => {
     spanNbSales.innerText = sales.length;
-    if (sales.length > 0) {
+    if (sales && sales.length > 0) {
         const prices = sales.map(s => {
             if (typeof s.price === 'object' && s.price.amount) return parseFloat(s.price.amount);
             return parseFloat(s.price) || 0;
         }).filter(p => p > 0);
 
-        spanP5.innerText = percentile(prices, 0.05).toFixed(2) + " \u20AC";
-        spanP25.innerText = percentile(prices, 0.25).toFixed(2) + " \u20AC";
-        spanP50.innerText = percentile(prices, 0.50).toFixed(2) + " \u20AC";
-        
+        if (prices.length > 0) {
+            spanP5.innerText = percentile(prices, 0.05).toFixed(2) + " €";
+            spanP25.innerText = percentile(prices, 0.25).toFixed(2) + " €";
+            spanP50.innerText = percentile(prices, 0.50).toFixed(2) + " €";
+        }
+
         const dates = sales.map(s => s.published ? new Date(s.published * 1000) : null).filter(d => d !== null);
-        const diff = Math.ceil(Math.abs(new Date(Math.max(...dates)) - new Date(Math.min(...dates))) / (1000 * 60 * 60 * 24));
-        spanLTV.innerText = diff + " days";
+        if (dates.length > 1) {
+            const diff = Math.ceil(Math.abs(new Date(Math.max(...dates)) - new Date(Math.min(...dates))) / (1000 * 60 * 60 * 24));
+            spanLTV.innerText = diff + " days";
+        } else { spanLTV.innerText = "1 day"; }
     } else {
         spanP5.innerText = "-"; spanP25.innerText = "-"; spanP50.innerText = "-"; spanLTV.innerText = "-";
     }
 };
 
-/**
- * Interactions
- */
 window.updateMarketInfo = async (id) => {
     selectedId = id;
-    spanSelectedId.innerText = `#${id}`;
+    spanSelectedId.innerText = id === "N/A" ? "N/A" : `#${id}`;
     const sales = await fetchSales(id);
     renderSalesIndicators(sales);
-    document.querySelectorAll(".deal-card").forEach(c => c.classList.toggle("selected", c.dataset.id === id));
+    document.querySelectorAll(".card").forEach(c => c.classList.toggle("selected", c.dataset.id === id));
 };
 
 window.toggleFavorite = (e, uuid) => {
@@ -237,7 +171,7 @@ window.toggleFavorite = (e, uuid) => {
         if (deal) favorites.push(deal);
     }
     localStorage.setItem("favorites", JSON.stringify(favorites));
-    applyFilters();
+    renderDeals();
 };
 
 const loadPage = async (page) => {
@@ -245,38 +179,46 @@ const loadPage = async (page) => {
     const data = await fetchDeals(page, size);
     allDeals = data.result;
     currentPagination = data.meta;
-    
-    const totalCount = activeFilters.favorites ? favorites.length : (currentPagination.count || 0);
-    currentPageSpan.innerText = totalCount > 0 ? currentPagination.currentPage : 0;
-    totalPagesSpan.innerText = totalCount > 0 ? (currentPagination.pageCount || 1) : 0;
-    prevBtn.disabled = currentPagination.currentPage === 1 || totalCount === 0;
-    nextBtn.disabled = currentPagination.currentPage === currentPagination.pageCount || currentPagination.pageCount === 0;
-
-    applyFilters();
-    if (allDeals.length > 0 && !selectedId) updateMarketInfo(allDeals[0].id);
+    prevBtn.disabled = currentPagination.currentPage === 1;
+    nextBtn.disabled = currentPagination.currentPage === currentPagination.pageCount;
+    renderDeals();
+    if (allDeals.length > 0 && !selectedId) {
+        updateMarketInfo(allDeals[0].id || "N/A");
+    }
 };
 
-// Listeners
-searchInput.addEventListener("input", (e) => {
+const populateIdDropdown = async () => {
+    try {
+        const response = await fetch("https://lego-api-blue.vercel.app/deals?size=100");
+        const body = await response.json();
+        if (body.success) {
+            const idSet = new Set();
+            body.data.result.forEach(d => { if (d.id) idSet.add(d.id); });
+            legoIdSelect.innerHTML = '<option value="">Search by LEGO Set ID...</option>';
+            Array.from(idSet).sort().forEach(id => {
+                const opt = document.createElement("option");
+                opt.value = id; opt.innerText = `Lego Set ${id}`;
+                legoIdSelect.appendChild(opt);
+            });
+        }
+    } catch (e) {}
+};
+
+legoIdSelect.addEventListener("change", (e) => {
     activeFilters.search = e.target.value;
-    loadPage(1); // Re-fetch on search
+    loadPage(1);
 });
 
 const setupToggle = (btnId, filterKey) => {
     document.querySelector(`#${btnId}`).addEventListener("click", (e) => {
-        // Toggle the active filter and deactivate others (except favorites)
         const wasActive = activeFilters[filterKey];
         if (filterKey !== 'favorites') {
-            activeFilters.discount = false;
-            activeFilters.commented = false;
-            activeFilters.hot = false;
-            document.querySelectorAll(".filter-btn:not(#filter-favorites)").forEach(b => b.classList.remove("active"));
+            activeFilters.discount = false; activeFilters.commented = false; activeFilters.hot = false;
+            document.querySelectorAll(".toolbar .btn").forEach(b => b.classList.remove("active"));
         }
-        
         activeFilters[filterKey] = !wasActive;
         e.currentTarget.classList.toggle("active", activeFilters[filterKey]);
-        
-        loadPage(1); // Re-fetch from page 1 whenever a filter is changed
+        loadPage(1);
     });
 };
 
@@ -285,11 +227,12 @@ setupToggle("filter-commented", "commented");
 setupToggle("filter-hot", "hot");
 setupToggle("filter-favorites", "favorites");
 
-document.querySelector("#sort-select").addEventListener("change", applyFilters);
+document.querySelector("#sort-select").addEventListener("change", () => loadPage(1));
 document.querySelector("#show-select").addEventListener("change", () => loadPage(1));
-
 prevBtn.addEventListener("click", () => loadPage(currentPagination.currentPage - 1));
 nextBtn.addEventListener("click", () => loadPage(currentPagination.currentPage + 1));
 
-// Init
-document.addEventListener("DOMContentLoaded", () => loadPage(1));
+document.addEventListener("DOMContentLoaded", () => {
+    populateIdDropdown();
+    loadPage(1);
+});
