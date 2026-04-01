@@ -35,23 +35,29 @@
                 <div class="filter-group">
                     <button class="btn" id="filter-discount"><i class="fas fa-tags"></i> 50%+ Off</button>
                     <button class="btn" id="filter-commented"><i class="fas fa-comment-dots"></i> Popular</button>
-                    <button class="btn" id="filter-hot"><i class="fas fa-fire"></i> Hot Deals</button>
+                    <button class="btn" id="filter-hot"><i class="fas fa-fire"></i> Hot</button>
+                    <button class="btn" id="filter-new"><i class="fas fa-clock"></i> New</button>
+                    <button class="btn" id="filter-on-sale"><i class="fas fa-percent"></i> On Sale</button>
                     <button class="btn" id="filter-favorites"><i class="fas fa-heart"></i> Saved</button>
                 </div>
                 
-                <div class="filter-group">
-                    <select class="select-control" id="sort-select">
-                        <option value="">Sort: Default</option>
-                        <option value="price-asc">Price: Low to High</option>
-                        <option value="price-desc">Price: High to Low</option>
-                        <option value="date-desc">Date: Newest First</option>
-                        <option value="date-asc">Date: Oldest First</option>
-                    </select>
-                    <select class="select-control" id="show-select">
-                        <option value="6">6 / page</option>
-                        <option value="12" selected>12 / page</option>
-                        <option value="24">24 / page</option>
-                    </select>
+                <div class="sort-controls">
+                    <button class="sort-btn" id="sort-price">
+                        <i class="fas fa-sort sort-icon"></i>
+                        <span class="sort-label">Price</span>
+                    </button>
+                    <button class="sort-btn" id="sort-date">
+                        <i class="fas fa-calendar sort-icon"></i>
+                        <span class="sort-label">Date</span>
+                    </button>
+                    <div class="page-size-control">
+                        <select class="show-select" id="show-select">
+                            <option value="6">6</option>
+                            <option value="12" selected>12</option>
+                            <option value="24">24</option>
+                        </select>
+                        <span>/ page</span>
+                    </div>
                 </div>
             </header>
 
@@ -84,33 +90,33 @@
                     <i class="fas fa-spinner fa-spin"></i> Analyzing...
                 </div>
 
-                <div id="market-stats" class="metrics-grid">
-                    <div class="metric-box full">
+                <div id="market-stats" class="metrics-rows">
+                    <div class="metric-row">
                         <span class="metric-label">Resale Listings</span>
                         <span id="nbSales" class="metric-value">0</span>
                     </div>
-                    <div class="metric-box">
-                        <span class="metric-label">P5 Price</span>
+                    <div class="metric-row">
+                        <span class="metric-label">P5 Price <i class="tip" data-tip="Cheapest 5% of resale listings">?</i></span>
                         <span id="p5Price" class="metric-value">-</span>
                     </div>
-                    <div class="metric-box">
-                        <span class="metric-label">P25 Price</span>
+                    <div class="metric-row">
+                        <span class="metric-label">P25 Price <i class="tip" data-tip="Bottom quarter of resale prices">?</i></span>
                         <span id="p25Price" class="metric-value">-</span>
                     </div>
-                    <div class="metric-box full">
-                        <span class="metric-label">Median (P50)</span>
-                        <span id="p50Price" class="metric-value success">-</span>
+                    <div class="metric-row highlight">
+                        <span class="metric-label">Median (P50) <i class="tip" data-tip="Fair market value — half sell above, half below">?</i></span>
+                        <span id="p50Price" class="metric-value large">-</span>
                     </div>
-                    <div class="metric-box full">
-                        <span class="metric-label">Market Velocity</span>
+                    <div class="metric-row">
+                        <span class="metric-label">Market Velocity <i class="tip" data-tip="Date range of listings — shorter means more active">?</i></span>
                         <span id="ltvPrice" class="metric-value">-</span>
                     </div>
-                    <div class="metric-box full" style="border-top: 1px solid var(--border); padding-top: 0.75rem; margin-top: 0.25rem;">
+                    <div class="metric-row divider">
                         <span class="metric-label">Deal Price</span>
                         <span id="dealPrice" class="metric-value">-</span>
                     </div>
-                    <div class="metric-box full">
-                        <span class="metric-label">Profit Potential</span>
+                    <div class="metric-row">
+                        <span class="metric-label"><span class="tl-dot" id="tl-dot"></span> Profit Potential <i class="tip" data-tip="Median resale minus your deal price">?</i></span>
                         <span id="profitPotential" class="metric-value">-</span>
                     </div>
                 </div>

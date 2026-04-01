@@ -78,6 +78,11 @@ const filterAndSearch = (DEALS, { search = "", filterBy = "", price, date, sort 
         }
     }
     if (filterBy === 'hot-deals') filtered = filtered.filter(d => (d.temperature || 0) >= 100);
+    if (filterBy === 'new') {
+        const cutoff = Math.floor(Date.now() / 1000) - 14 * 86400;
+        filtered = filtered.filter(d => (d.published || 0) >= cutoff);
+    }
+    if (filterBy === 'on-sale') filtered = filtered.filter(d => (d.discount || 0) > 0);
 
     if (sort === 'price-desc') return filtered.sort((a, b) => b.price - a.price);
     if (sort === 'date-desc') return filtered.sort((a, b) => b.published - a.published);

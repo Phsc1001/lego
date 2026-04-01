@@ -24,6 +24,21 @@ let currentPagination = {};
 let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
 let selectedId = null;
 let selectedPrice = null;
+let currentSort = '';
+
+// Cyclical sort state machines
+const PRICE_CYCLE = [
+    { val: '',           label: 'Price',   icon: 'fa-sort' },
+    { val: 'price-asc',  label: 'Price ↑', icon: 'fa-sort-up' },
+    { val: 'price-desc', label: 'Price ↓', icon: 'fa-sort-down' }
+];
+const DATE_CYCLE = [
+    { val: '',           label: 'Date',    icon: 'fa-calendar' },
+    { val: 'date-desc',  label: 'Newest',  icon: 'fa-clock' },
+    { val: 'date-asc',   label: 'Oldest',  icon: 'fa-calendar' }
+];
+let priceIdx = 0;
+let dateIdx  = 0;
 
 const getDealId = d => d.id || d.title.match(/\b(\d{4,6})\b/)?.[1] || d.link?.replace(/-\d{7}$/, '').match(/\b(\d{4,6})\b/)?.[1] || null;
 const isRealSetId = id => id && /^\d{4,6}$/.test(id);
@@ -36,7 +51,7 @@ const timeAgo = ts => {
 const tempColor = temp => temp >= 300 ? '#ef4444' : temp >= 100 ? '#f97316' : '#64748b';
 
 const activeFilters = {
-    discount: false, commented: false, hot: false, favorites: false, search: ""
+    discount: false, commented: false, hot: false, new: false, onSale: false, favorites: false, search: ""
 };
 
 /**
@@ -44,15 +59,16 @@ const activeFilters = {
  */
 const fetchDeals = async (page = 1, size = 12) => {
     try {
-        const sort = document.querySelector("#sort-select").value;
         let url = `http://localhost:8092/deals?page=${page}&size=${size}`;
 
-        if (activeFilters.discount) url += `&filterBy=best-discount`;
+        if (activeFilters.discount)       url += `&filterBy=best-discount`;
         else if (activeFilters.commented) url += `&filterBy=most-commented`;
-        else if (activeFilters.hot) url += `&filterBy=hot-deals`;
+        else if (activeFilters.hot)       url += `&filterBy=hot-deals`;
+        else if (activeFilters.new)       url += `&filterBy=new`;
+        else if (activeFilters.onSale)    url += `&filterBy=on-sale`;
 
         if (activeFilters.search) url += `&search=${encodeURIComponent(activeFilters.search)}`;
-        if (sort) url += `&sort=${sort}`;
+        if (currentSort) url += `&sort=${currentSort}`;
 
         const response = await fetch(url);
         const body = await response.json();
@@ -131,6 +147,7 @@ const renderDeals = () => {
                         </div>
                     </div>
                 </div>
+                ${deal.link ? `<a href="${deal.link}" target="_blank" rel="noopener noreferrer" class="buy-deal-btn" onclick="event.stopPropagation()"><i class="fas fa-external-link-alt"></i> Buy Deal</a>` : ""}
             </div>`;
     }).join("");
 };
@@ -164,10 +181,15 @@ const renderSalesIndicators = (sales, dealPrice) => {
                 const profit = p50 - dealPrice;
                 const pct = ((profit / dealPrice) * 100).toFixed(0);
                 spanProfit.innerText = (profit >= 0 ? "+" : "") + profit.toFixed(2) + " € (" + pct + "%)";
-                spanProfit.style.color = profit >= 0 ? "var(--success, #22c55e)" : "var(--danger, #ef4444)";
+                const tier = pct >= 20 ? 'high' : pct >= 0 ? 'mid' : 'low';
+                spanProfit.className = `metric-value profit-${tier}`;
+                const dot = document.querySelector('#tl-dot');
+                if (dot) dot.className = `tl-dot ${tier}`;
             } else {
                 spanProfit.innerText = "-";
-                spanProfit.style.color = "";
+                spanProfit.className = 'metric-value';
+                const dot = document.querySelector('#tl-dot');
+                if (dot) dot.className = 'tl-dot';
             }
         }
 
@@ -197,12 +219,9 @@ const renderRelatedDeals = (setId, currentPrice) => {
     section.style.display = "block";
     container.innerHTML = related.map(deal => {
         const isActive = deal.price === currentPrice;
-        return `<div onclick="updateMarketInfo('${setId}', ${deal.price})"
-                     style="padding:0.55rem 0.75rem; border-radius:8px; cursor:pointer; margin-bottom:0.4rem; display:flex; justify-content:space-between; align-items:center;
-                            background:${isActive ? 'rgba(99,102,241,0.08)' : 'transparent'};
-                            border:1px solid ${isActive ? 'var(--primary, #6366f1)' : 'var(--border, #e2e8f0)'};">
-                    <span style="font-size:0.7rem; color:var(--text-muted); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-right:0.5rem;">${deal.title.substring(0, 38)}…</span>
-                    <span style="font-size:0.8rem; font-weight:700; white-space:nowrap; color:${isActive ? 'var(--primary, #6366f1)' : 'inherit'}">${deal.price.toFixed(2)} €</span>
+        return `<div class="related-deal-item${isActive ? ' active' : ''}" onclick="updateMarketInfo('${setId}', ${deal.price})">
+                    <span>${deal.title.substring(0, 38)}…</span>
+                    <span>${deal.price.toFixed(2)} €</span>
                 </div>`;
     }).join('');
 };
@@ -273,6 +292,7 @@ const setupToggle = (btnId, filterKey) => {
         const wasActive = activeFilters[filterKey];
         if (filterKey !== 'favorites') {
             activeFilters.discount = false; activeFilters.commented = false; activeFilters.hot = false;
+            activeFilters.new = false; activeFilters.onSale = false;
             document.querySelectorAll(".toolbar .btn").forEach(b => b.classList.remove("active"));
         }
         activeFilters[filterKey] = !wasActive;
@@ -284,9 +304,34 @@ const setupToggle = (btnId, filterKey) => {
 setupToggle("filter-discount", "discount");
 setupToggle("filter-commented", "commented");
 setupToggle("filter-hot", "hot");
+setupToggle("filter-new", "new");
+setupToggle("filter-on-sale", "onSale");
 setupToggle("filter-favorites", "favorites");
 
-document.querySelector("#sort-select").addEventListener("change", () => loadPage(1));
+const updateSortBtn = (el, state) => {
+    el.querySelector('.sort-label').innerText = state.label;
+    el.querySelector('.sort-icon').className = `fas ${state.icon} sort-icon`;
+    el.classList.toggle('active', state.val !== '');
+};
+
+document.querySelector('#sort-price').addEventListener('click', () => {
+    priceIdx = (priceIdx + 1) % PRICE_CYCLE.length;
+    dateIdx = 0;
+    updateSortBtn(document.querySelector('#sort-price'), PRICE_CYCLE[priceIdx]);
+    updateSortBtn(document.querySelector('#sort-date'), DATE_CYCLE[dateIdx]);
+    currentSort = PRICE_CYCLE[priceIdx].val;
+    loadPage(1);
+});
+
+document.querySelector('#sort-date').addEventListener('click', () => {
+    dateIdx = (dateIdx + 1) % DATE_CYCLE.length;
+    priceIdx = 0;
+    updateSortBtn(document.querySelector('#sort-date'), DATE_CYCLE[dateIdx]);
+    updateSortBtn(document.querySelector('#sort-price'), PRICE_CYCLE[priceIdx]);
+    currentSort = DATE_CYCLE[dateIdx].val;
+    loadPage(1);
+});
+
 document.querySelector("#show-select").addEventListener("change", () => loadPage(1));
 prevBtn.addEventListener("click", () => loadPage(currentPagination.currentPage - 1));
 nextBtn.addEventListener("click", () => loadPage(currentPagination.currentPage + 1));
