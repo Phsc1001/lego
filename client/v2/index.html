@@ -1,28 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LEGO Insights Dashboard</title>
+    <title>LEGO Profits — Deal Hunter Pro</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
+    <!-- Intro Loading Overlay -->
+    <div id="intro-overlay" class="intro-overlay">
+        <div class="intro-logo">
+            <span class="logo-stud intro-stud" aria-hidden="true"></span>
+            LEGO<span class="logo-accent">Profits</span>
+        </div>
+        <div class="intro-bar"></div>
+    </div>
+
     <nav class="navbar">
         <a href="#" class="logo">
-            <i class="fas fa-layer-group"></i>
-            LEGO<span>Insights</span>
+            <span class="logo-stud" aria-hidden="true"></span>
+            LEGO<span>Profits</span>
         </a>
         <div class="search-wrapper">
             <select id="lego-id-select" class="id-select">
                 <option value="">Search by LEGO Set ID...</option>
             </select>
         </div>
+        <button id="theme-toggle" class="theme-btn" title="Toggle dark / light mode" aria-label="Toggle theme">
+            <i class="fas fa-moon"></i>
+        </button>
+
         <div class="nav-metrics">
             <div class="stat-group" style="text-align: right;">
-                <span id="total-count" class="metric-value" style="color: var(--primary); font-size: 1.25rem; font-weight: 800;">0</span>
+                <span id="total-count" class="metric-value" style="color: var(--accent); font-size: 1.25rem; font-weight: 800;">0</span>
                 <span class="metric-label" style="display: block; font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Total Deals</span>
             </div>
         </div>
@@ -36,9 +49,9 @@
                     <button class="btn" id="filter-discount"><i class="fas fa-tags"></i> 50%+ Off</button>
                     <button class="btn" id="filter-commented"><i class="fas fa-comment-dots"></i> Popular</button>
                     <button class="btn" id="filter-hot"><i class="fas fa-fire"></i> Hot</button>
-                    <button class="btn" id="filter-new"><i class="fas fa-clock"></i> New</button>
                     <button class="btn" id="filter-on-sale"><i class="fas fa-percent"></i> On Sale</button>
                     <button class="btn" id="filter-favorites"><i class="fas fa-heart"></i> Saved</button>
+                    <button class="btn" id="sniper-mode" title="Show only deals with ≥20% discount (high profit potential)"><i class="fas fa-crosshairs"></i> Sniper</button>
                 </div>
                 
                 <div class="sort-controls">
@@ -46,14 +59,15 @@
                         <i class="fas fa-sort sort-icon"></i>
                         <span class="sort-label">Price</span>
                     </button>
-                    <button class="sort-btn" id="sort-date">
+                    <button class="sort-btn" id="sort-date" title="Sort by date posted">
                         <i class="fas fa-calendar sort-icon"></i>
                         <span class="sort-label">Date</span>
+                        <i class="fas fa-chevron-up date-arrow" style="font-size:0.6rem; opacity:0; transition: opacity 0.2s, transform 0.3s;"></i>
                     </button>
                     <div class="page-size-control">
                         <select class="show-select" id="show-select">
-                            <option value="6">6</option>
-                            <option value="12" selected>12</option>
+                            <option value="6" selected>6</option>
+                            <option value="12">12</option>
                             <option value="24">24</option>
                         </select>
                         <span>/ page</span>
@@ -86,15 +100,37 @@
                     <span id="selected-set-id" class="set-id">#----</span>
                 </div>
 
-                <div id="market-loading" style="display:none; text-align: center; padding: 1rem;">
-                    <i class="fas fa-spinner fa-spin"></i> Analyzing...
+                <!-- ROI Hero — always first, full-width -->
+                <div class="roi-hero-widget">
+                    <span class="metric-label" style="justify-content:center; margin-bottom:0.3rem;">
+                        Estimated ROI <i class="tip" data-tip="Return on Investment: (Median Resale − Deal Price) ÷ Deal Price × 100">?</i>
+                    </span>
+                    <span id="roiPercent" class="roi-value">—</span>
                 </div>
 
+                <!-- Profit-first 2×2 grid: Deal Price | Median | Resale | Buy Signal -->
                 <div id="market-stats" class="metrics-rows">
+                    <div class="metric-row divider">
+                        <span class="metric-label">Deal Price</span>
+                        <span id="dealPrice" class="metric-value">-</span>
+                    </div>
+                    <div class="metric-row highlight">
+                        <span class="metric-label">Median (P50) <i class="tip" data-tip="Fair market value — half sell above, half below">?</i></span>
+                        <span id="p50Price" class="metric-value large">-</span>
+                    </div>
                     <div class="metric-row">
                         <span class="metric-label">Resale Listings</span>
                         <span id="nbSales" class="metric-value">0</span>
                     </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Buy Signal <i class="tip" data-tip="Investment signal: Strong Buy / Hold / Liquidate based on profit potential">?</i></span>
+                        <div id="buySignal" class="buy-signal">
+                            <span class="buy-signal-track"><span class="buy-signal-fill"></span></span>
+                            <span class="buy-signal-label">—</span>
+                        </div>
+                        <span id="ltvPrice" style="display:none"></span>
+                    </div>
+                    <!-- Full-width rows (nth-child ≥ 5) -->
                     <div class="metric-row">
                         <span class="metric-label">P5 Price <i class="tip" data-tip="Cheapest 5% of resale listings">?</i></span>
                         <span id="p5Price" class="metric-value">-</span>
@@ -103,24 +139,13 @@
                         <span class="metric-label">P25 Price <i class="tip" data-tip="Bottom quarter of resale prices">?</i></span>
                         <span id="p25Price" class="metric-value">-</span>
                     </div>
-                    <div class="metric-row highlight">
-                        <span class="metric-label">Median (P50) <i class="tip" data-tip="Fair market value — half sell above, half below">?</i></span>
-                        <span id="p50Price" class="metric-value large">-</span>
-                    </div>
-                    <div class="metric-row">
-                        <span class="metric-label">Market Velocity <i class="tip" data-tip="Date range of listings — shorter means more active">?</i></span>
-                        <span id="ltvPrice" class="metric-value">-</span>
-                    </div>
-                    <div class="metric-row divider">
-                        <span class="metric-label">Deal Price</span>
-                        <span id="dealPrice" class="metric-value">-</span>
-                    </div>
                     <div class="metric-row">
                         <span class="metric-label"><span class="tl-dot" id="tl-dot"></span> Profit Potential <i class="tip" data-tip="Median resale minus your deal price">?</i></span>
                         <span id="profitPotential" class="metric-value">-</span>
                     </div>
                 </div>
             </div>
+
             <div id="related-section" style="margin-top: 1.25rem; display: none;">
                 <div class="section-header" style="margin-bottom: 0.75rem;">
                     <i class="fas fa-layer-group"></i>

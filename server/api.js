@@ -83,6 +83,7 @@ const filterAndSearch = (DEALS, { search = "", filterBy = "", price, date, sort 
         filtered = filtered.filter(d => (d.published || 0) >= cutoff);
     }
     if (filterBy === 'on-sale') filtered = filtered.filter(d => (d.discount || 0) > 0);
+    if (filterBy === 'sniper')   filtered = filtered.filter(d => (d.discount || 0) >= 20);
 
     if (sort === 'price-desc') return filtered.sort((a, b) => b.price - a.price);
     if (sort === 'date-desc') return filtered.sort((a, b) => b.published - a.published);

@@ -26,6 +26,19 @@ let selectedId = null;
 let selectedPrice = null;
 let currentSort = '';
 
+// ── Theme Toggle ──
+const themeToggle = document.querySelector('#theme-toggle');
+const applyTheme = (theme) => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+    const icon = themeToggle.querySelector('i');
+    icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+};
+applyTheme(localStorage.getItem('theme') || 'light');
+themeToggle.addEventListener('click', () => {
+    applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+});
+
 // Cyclical sort state machines
 const PRICE_CYCLE = [
     { val: '',           label: 'Price',   icon: 'fa-sort' },
@@ -51,7 +64,7 @@ const timeAgo = ts => {
 const tempColor = temp => temp >= 300 ? '#ef4444' : temp >= 100 ? '#f97316' : '#64748b';
 
 const activeFilters = {
-    discount: false, commented: false, hot: false, new: false, onSale: false, favorites: false, search: ""
+    discount: false, commented: false, hot: false, onSale: false, favorites: false, sniper: false, search: ""
 };
 
 /**
@@ -64,8 +77,8 @@ const fetchDeals = async (page = 1, size = 12) => {
         if (activeFilters.discount)       url += `&filterBy=best-discount`;
         else if (activeFilters.commented) url += `&filterBy=most-commented`;
         else if (activeFilters.hot)       url += `&filterBy=hot-deals`;
-        else if (activeFilters.new)       url += `&filterBy=new`;
         else if (activeFilters.onSale)    url += `&filterBy=on-sale`;
+        else if (activeFilters.sniper)    url += `&filterBy=sniper`;
 
         if (activeFilters.search) url += `&search=${encodeURIComponent(activeFilters.search)}`;
         if (currentSort) url += `&sort=${currentSort}`;
@@ -90,16 +103,15 @@ const fetchDeals = async (page = 1, size = 12) => {
 const fetchSales = async (id) => {
     if (!id || id === "N/A") return [];
     try {
-        marketStats.style.opacity = "0.2";
-        marketLoading.style.display = "block";
+        // Instant skeleton feedback on all metric values + ROI hero
+        document.querySelectorAll('#market-stats .metric-value, #roiPercent').forEach(el => el.classList.add('skeleton'));
         const response = await fetch(`http://localhost:8092/sales/search?legoSetId=${id}`);
         const body = await response.json();
-        marketStats.style.opacity = "1";
-        marketLoading.style.display = "none";
+        document.querySelectorAll('#market-stats .metric-value, #roiPercent').forEach(el => el.classList.remove('skeleton'));
         return (body.success && body.data) ? body.data.result : [];
     } catch (e) {
         console.error("Sales Error:", e);
-        marketLoading.style.display = "none";
+        document.querySelectorAll('#market-stats .metric-value, #roiPercent').forEach(el => el.classList.remove('skeleton'));
         return [];
     }
 };
@@ -116,7 +128,7 @@ const renderDeals = () => {
         return;
     }
 
-    dealsGrid.innerHTML = dealsToRender.map(deal => {
+    dealsGrid.innerHTML = dealsToRender.map((deal, i) => {
         const isFav = favorites.some(fav => fav.uuid === deal.uuid);
         const legoId = getDealId(deal) || "N/A";
         const isSelected = selectedId === legoId && selectedPrice === deal.price ? "selected" : "";
@@ -125,15 +137,24 @@ const renderDeals = () => {
         const age = deal.published ? timeAgo(deal.published) : "";
         const retailHtml = deal.retail ? `<span style="text-decoration:line-through; color:var(--text-muted); font-size:0.75rem; margin-right:4px;">${deal.retail} €</span>` : "";
 
+        // Profit heatmap
+        const discount = deal.discount || 0;
+        const profitClass = discount >= 50 ? 'profit-gold' : discount >= 25 ? 'profit-green' : '';
+        const hotBadge = discount >= 50 ? `<div class="hot-deal-badge">🔥 HOT DEAL</div>` : '';
+        const savings = deal.retail && deal.retail > deal.price
+            ? `<div class="savings-tag">+€${(deal.retail - deal.price).toFixed(2)} saved</div>`
+            : (age ? `<div class="age-tag">${age}</div>` : '');
+
         return `
-            <div class="card ${isSelected}" data-id="${legoId}" data-price="${deal.price}" onclick="updateMarketInfo('${legoId}', ${deal.price})">
+            <div class="card ${isSelected} ${profitClass}" data-id="${legoId}" data-uuid="${deal.uuid}" data-price="${deal.price}" style="animation-delay: ${Math.min(i * 0.06, 0.6)}s" onclick="updateMarketInfo('${legoId}', ${deal.price})">
                 <div class="card-image">
-                    ${deal.discount ? `<div class="discount-badge">-${deal.discount}%</div>` : ""}
-                    ${age ? `<div style="position:absolute; bottom:0.5rem; left:0.5rem; background:rgba(0,0,0,0.55); color:#fff; font-size:0.65rem; padding:2px 6px; border-radius:4px;">${age}</div>` : ""}
+                    ${hotBadge}
+                    ${!hotBadge && deal.discount ? `<div class="discount-badge">-${deal.discount}%</div>` : ""}
+                    ${savings}
                     <img src="${imgSrc}" alt="${deal.title}" referrerpolicy="no-referrer"
                          onerror="this.onerror=null; this.src='https://placehold.co/300x300?text=LEGO+${legoId}';">
-                    <button class="fav-toggle ${isFav ? 'active' : ''}" style="position:absolute; top:1rem; right:1rem; border:none; background:white; width:35px; height:35px; border-radius:50%; cursor:pointer; color:${isFav ? 'var(--accent)' : '#cbd5e1'}; box-shadow:0 2px 5px rgba(0,0,0,0.1);" onclick="toggleFavorite(event, '${deal.uuid}')">
-                        <i class="${isFav ? 'fas' : 'far'} fa-star"></i>
+                    <button class="fav-toggle ${isFav ? 'active' : ''}" onclick="toggleFavorite(event, '${deal.uuid}')">
+                        <i class="${isFav ? 'fas' : 'far'} fa-heart"></i>
                     </button>
                 </div>
                 <div class="card-content">
@@ -162,8 +183,26 @@ const percentile = (arr, q) => {
 };
 
 const renderSalesIndicators = (sales, dealPrice) => {
+    // Re-trigger staggered bubble entrance (spring pop-in on each selection)
+    document.querySelectorAll('.metric-row').forEach((el, i) => {
+        el.style.animation = 'none';
+        void el.offsetWidth; // force reflow
+        el.style.animation = '';
+        el.style.animationDelay = `${i * 0.05}s`;
+    });
+
     spanNbSales.innerText = sales.length;
     spanDealPrice.innerText = dealPrice != null ? dealPrice.toFixed(2) + " €" : "-";
+
+    const roiEl     = document.querySelector('#roiPercent');
+    const roiWidget = document.querySelector('.roi-hero-widget');
+    const buySignal = document.querySelector('#buySignal');
+
+    const resetExtras = () => {
+        if (roiEl)     { roiEl.textContent = '—'; roiEl.className = 'roi-value'; }
+        if (roiWidget) roiWidget.classList.remove('glow-pulse');
+        if (buySignal) { buySignal.className = 'buy-signal'; buySignal.querySelector('.buy-signal-label').textContent = '—'; }
+    };
 
     if (sales && sales.length > 0) {
         const prices = sales.map(s => {
@@ -180,16 +219,38 @@ const renderSalesIndicators = (sales, dealPrice) => {
             if (dealPrice != null) {
                 const profit = p50 - dealPrice;
                 const pct = ((profit / dealPrice) * 100).toFixed(0);
+                const roiPct = parseFloat(pct);
                 spanProfit.innerText = (profit >= 0 ? "+" : "") + profit.toFixed(2) + " € (" + pct + "%)";
-                const tier = pct >= 20 ? 'high' : pct >= 0 ? 'mid' : 'low';
+                const tier = roiPct >= 20 ? 'high' : roiPct >= 0 ? 'mid' : 'low';
                 spanProfit.className = `metric-value profit-${tier}`;
                 const dot = document.querySelector('#tl-dot');
-                if (dot) dot.className = `tl-dot ${tier}`;
+                if (dot) dot.className = `tl-dot ${tier}${tier === 'high' ? ' pulse' : ''}`;
+
+                // ROI count-up animation
+                if (roiEl) {
+                    roiEl.className = `roi-value${roiPct < 0 ? ' negative' : ''}`;
+                    let step = 0; const STEPS = 18;
+                    const timer = setInterval(() => {
+                        step++;
+                        const cur = roiPct * (step / STEPS);
+                        roiEl.textContent = (cur >= 0 ? '+' : '') + cur.toFixed(1) + '%';
+                        if (step >= STEPS) { clearInterval(timer); roiEl.textContent = (roiPct >= 0 ? '+' : '') + roiPct.toFixed(1) + '%'; }
+                    }, 20);
+                }
+                if (roiWidget) roiWidget.classList.toggle('glow-pulse', roiPct >= 30);
+
+                // Buy Signal Gauge
+                if (buySignal) {
+                    const state = tier === 'high' ? 'strong-buy' : tier === 'mid' ? 'hold' : 'liquidate';
+                    const label = tier === 'high' ? 'Strong Buy' : tier === 'mid' ? 'Hold' : 'Liquidate';
+                    buySignal.className = `buy-signal ${state}`;
+                    buySignal.querySelector('.buy-signal-label').textContent = label;
+                }
             } else {
-                spanProfit.innerText = "-";
-                spanProfit.className = 'metric-value';
+                spanProfit.innerText = "-"; spanProfit.className = 'metric-value';
                 const dot = document.querySelector('#tl-dot');
                 if (dot) dot.className = 'tl-dot';
+                resetExtras();
             }
         }
 
@@ -197,12 +258,11 @@ const renderSalesIndicators = (sales, dealPrice) => {
         if (dates.length > 1) {
             const diff = Math.ceil(Math.abs(new Date(Math.max(...dates)) - new Date(Math.min(...dates))) / (1000 * 60 * 60 * 24));
             spanLTV.innerText = diff + " days";
-        } else {
-            spanLTV.innerText = "1 day";
-        }
+        } else { spanLTV.innerText = "1 day"; }
     } else {
         spanP5.innerText = "-"; spanP25.innerText = "-"; spanP50.innerText = "-";
         spanLTV.innerText = "-"; spanProfit.innerText = "-"; spanProfit.style.color = "";
+        resetExtras();
     }
 };
 
@@ -248,6 +308,16 @@ window.toggleFavorite = (e, uuid) => {
     }
     localStorage.setItem("favorites", JSON.stringify(favorites));
     renderDeals();
+    // Heart pop animation on the re-rendered button
+    requestAnimationFrame(() => {
+        const btn = document.querySelector(`.card[data-uuid="${uuid}"] .fav-toggle`);
+        if (btn) {
+            btn.classList.remove('popping');
+            void btn.offsetWidth;
+            btn.classList.add('popping');
+            btn.addEventListener('animationend', () => btn.classList.remove('popping'), { once: true });
+        }
+    });
 };
 
 const loadPage = async (page) => {
@@ -290,10 +360,10 @@ legoIdSelect.addEventListener("change", (e) => {
 const setupToggle = (btnId, filterKey) => {
     document.querySelector(`#${btnId}`).addEventListener("click", (e) => {
         const wasActive = activeFilters[filterKey];
-        if (filterKey !== 'favorites') {
-            activeFilters.discount = false; activeFilters.commented = false; activeFilters.hot = false;
-            activeFilters.new = false; activeFilters.onSale = false;
-            document.querySelectorAll(".toolbar .btn").forEach(b => b.classList.remove("active"));
+        if (filterKey !== 'favorites' && filterKey !== 'sniper') {
+            activeFilters.discount = false; activeFilters.commented = false;
+            activeFilters.hot = false; activeFilters.onSale = false;
+            document.querySelectorAll(".toolbar .btn:not(#sniper-mode):not(#filter-favorites)").forEach(b => b.classList.remove("active"));
         }
         activeFilters[filterKey] = !wasActive;
         e.currentTarget.classList.toggle("active", activeFilters[filterKey]);
@@ -304,12 +374,19 @@ const setupToggle = (btnId, filterKey) => {
 setupToggle("filter-discount", "discount");
 setupToggle("filter-commented", "commented");
 setupToggle("filter-hot", "hot");
-setupToggle("filter-new", "new");
 setupToggle("filter-on-sale", "onSale");
 setupToggle("filter-favorites", "favorites");
+setupToggle("sniper-mode", "sniper");
 
 const updateSortBtn = (el, state) => {
-    el.querySelector('.sort-label').innerText = state.label;
+    const label = el.querySelector('.sort-label');
+    label.style.opacity = '0';
+    label.style.transform = 'translateY(-6px)';
+    setTimeout(() => {
+        label.innerText = state.label;
+        label.style.opacity = '1';
+        label.style.transform = 'translateY(0)';
+    }, 150);
     el.querySelector('.sort-icon').className = `fas ${state.icon} sort-icon`;
     el.classList.toggle('active', state.val !== '');
 };
@@ -329,6 +406,13 @@ document.querySelector('#sort-date').addEventListener('click', () => {
     updateSortBtn(document.querySelector('#sort-date'), DATE_CYCLE[dateIdx]);
     updateSortBtn(document.querySelector('#sort-price'), PRICE_CYCLE[priceIdx]);
     currentSort = DATE_CYCLE[dateIdx].val;
+    // Animate directional arrow on date button
+    const arrow = document.querySelector('#sort-date .date-arrow');
+    if (arrow) {
+        const state = DATE_CYCLE[dateIdx];
+        arrow.style.opacity = state.val ? '0.8' : '0';
+        arrow.style.transform = state.val === 'date-asc' ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
     loadPage(1);
 });
 
@@ -336,7 +420,13 @@ document.querySelector("#show-select").addEventListener("change", () => loadPage
 prevBtn.addEventListener("click", () => loadPage(currentPagination.currentPage - 1));
 nextBtn.addEventListener("click", () => loadPage(currentPagination.currentPage + 1));
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     populateIdDropdown();
-    loadPage(1);
+    await loadPage(1);
+    // Dismiss intro overlay after first page load
+    const overlay = document.querySelector('#intro-overlay');
+    if (overlay) {
+        overlay.classList.add('fade-out');
+        setTimeout(() => overlay.remove(), 580);
+    }
 });
