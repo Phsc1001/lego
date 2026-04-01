@@ -72,7 +72,7 @@ const activeFilters = {
  */
 const fetchDeals = async (page = 1, size = 12) => {
     try {
-        let url = `https://server-fawn-omega-23.vercel.app/deals?page=${page}&size=${size}`;
+        let url = `https://lego-api-nine.vercel.app/deals?page=${page}&size=${size}`;
 
         if (activeFilters.discount)       url += `&filterBy=best-discount`;
         else if (activeFilters.commented) url += `&filterBy=most-commented`;
@@ -105,7 +105,7 @@ const fetchSales = async (id) => {
     try {
         // Instant skeleton feedback on all metric values + ROI hero
         document.querySelectorAll('#market-stats .metric-value, #roiPercent').forEach(el => el.classList.add('skeleton'));
-        const response = await fetch(`https://server-fawn-omega-23.vercel.app/sales/search?legoSetId=${id}`);
+        const response = await fetch(`https://lego-api-nine.vercel.app/sales/search?legoSetId=${id}`);
         const body = await response.json();
         document.querySelectorAll('#market-stats .metric-value, #roiPercent').forEach(el => el.classList.remove('skeleton'));
         return (body.success && body.data) ? body.data.result : [];
@@ -226,7 +226,7 @@ const renderSalesIndicators = (sales, dealPrice) => {
                 const dot = document.querySelector('#tl-dot');
                 if (dot) dot.className = `tl-dot ${tier}${tier === 'high' ? ' pulse' : ''}`;
 
-                // ROI count-up animation
+                // Market Analysis Animation
                 if (roiEl) {
                     roiEl.className = `roi-value${roiPct < 0 ? ' negative' : ''}`;
                     let step = 0; const STEPS = 18;
@@ -337,7 +337,7 @@ const loadPage = async (page) => {
 
 const populateIdDropdown = async () => {
     try {
-        const response = await fetch("https://server-fawn-omega-23.vercel.app/deals?size=100");
+        const response = await fetch("https://lego-api-nine.vercel.app/deals?size=100");
         const body = await response.json();
         if (body.success) {
             const idSet = new Set();

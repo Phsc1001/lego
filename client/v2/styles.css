@@ -1,18 +1,18 @@
 /* =============================================
-   LEGO Insights — Modern Premium Widget Edition
+   LEGO Dashboard — Portfolio v2
    ============================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
 
 :root {
-    /* Palette — Studio Elite */
+    /* Main Colors */
     --bg:           #F2F4F7;
     --surface:      #FFFFFF;
     --surface-2:    #F0F3F8;
     --border:       rgba(0,0,0,0.07);
     --border-hover: rgba(0,0,0,0.15);
 
-    /* Signature Cyan */
+    /* Accent Color */
     --accent:       #00BFFF;
     --accent-dim:   rgba(0,191,255,0.12);
     --accent-glow:  0 4px 24px rgba(0,191,255,0.28);
@@ -103,7 +103,7 @@ body {
     display: inline-block;
 }
 
-/* ── Logo Stud — CSS Isometric Cylinder ── */
+/* ── Lego Stud Icon ── */
 .logo-stud {
     --stud-size: 22px;
     display: inline-block;
@@ -419,7 +419,7 @@ body {
 .card-stats  { display: flex; gap: 0.5rem; font-size: 0.7rem; font-weight: 700; }
 .stat        { display: flex; align-items: center; gap: 0.25rem; color: var(--text-muted); }
 
-/* Buy button - Improved accessibility */
+/* Buy button - Improved accessibility - Now only on hover */
 .buy-deal-btn {
     display: block;
     margin: 0.55rem 1.1rem 0.9rem;
@@ -431,17 +431,21 @@ body {
     font-weight: 700;
     text-decoration: none;
     text-align: center;
-    transition: all 0.2s var(--ease);
+    transition: all 0.3s var(--ease);
     border: 1px solid var(--accent);
     font-family: inherit;
-    opacity: 1;
-    transform: none;
+    opacity: 0;
+    transform: translateY(8px);
     letter-spacing: 0.01em;
+    pointer-events: none;
 }
 .card:hover .buy-deal-btn {
     background: var(--accent);
     color: white;
     box-shadow: 0 4px 12px rgba(0,191,255,0.2);
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
 }
 .buy-deal-btn:hover {
     background: #0099D6 !important;
@@ -449,7 +453,7 @@ body {
     box-shadow: 0 6px 20px rgba(0,153,214,0.3) !important;
 }
 
-/* ── Sidebar — Premium Panel ── */
+/* ── Sidebar Analysis ── */
 .sidebar {
     background: var(--surface);
     border-left: 1px solid var(--border);
