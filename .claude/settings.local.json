@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(vercel:*)"
+      "Bash(vercel:*)",
+      "Bash(git push:*)",
+      "Bash(curl -s \"https://server-fawn-omega-23.vercel.app/deals?page=1&size=2\")",
+      "Bash(curl:*)",
+      "Bash(python3 -c \"import json; d=json.load\\(open\\(''/c/Users/famil/Documents/ESILVA4/S8/WebDesign/server/sources/vinted.json''\\)\\); print\\(list\\(d.keys\\(\\)\\)[:20]\\)\")"
     ]
   }
 }

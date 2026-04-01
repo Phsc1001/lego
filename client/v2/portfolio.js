@@ -14,6 +14,8 @@ const spanP5 = document.querySelector("#p5Price");
 const spanP25 = document.querySelector("#p25Price");
 const spanP50 = document.querySelector("#p50Price");
 const spanLTV = document.querySelector("#ltvPrice");
+const spanDealPrice = document.querySelector("#dealPrice");
+const spanProfit = document.querySelector("#profitPotential");
 const marketStats = document.querySelector("#market-stats");
 const marketLoading = document.querySelector("#market-loading");
 
@@ -31,14 +33,15 @@ const activeFilters = {
  */
 const fetchDeals = async (page = 1, size = 12) => {
     try {
-        let url = `https://server-fawn-omega-23.vercel.app/deals?page=${page}&size=${size}`;
-        
-        // Remote API filter mapping
+        const sort = document.querySelector("#sort-select").value;
+        let url = `http://localhost:8092/deals?page=${page}&size=${size}`;
+
         if (activeFilters.discount) url += `&filterBy=best-discount`;
         else if (activeFilters.commented) url += `&filterBy=most-commented`;
         else if (activeFilters.hot) url += `&filterBy=hot-deals`;
-        
+
         if (activeFilters.search) url += `&search=${encodeURIComponent(activeFilters.search)}`;
+        if (sort) url += `&sort=${sort}`;
 
         const response = await fetch(url);
         const body = await response.json();
@@ -62,7 +65,7 @@ const fetchSales = async (id) => {
     try {
         marketStats.style.opacity = "0.2";
         marketLoading.style.display = "block";
-        const response = await fetch(`https://server-fawn-omega-23.vercel.app/sales/search?legoSetId=${id}`);
+        const response = await fetch(`http://localhost:8092/sales/search?legoSetId=${id}`);
         const body = await response.json();
         marketStats.style.opacity = "1";
         marketLoading.style.display = "none";
@@ -89,15 +92,15 @@ const renderDeals = () => {
     dealsGrid.innerHTML = dealsToRender.map(deal => {
         const isFav = favorites.some(fav => fav.uuid === deal.uuid);
         // Remote API uses .id or we extract from title
-        const legoId = deal.id || deal.title.match(/\b(\d{4,6})\b/)?.[1] || "N/A";
+        const legoId = deal.id || deal.title.match(/\b(\d{4,6})\b/)?.[1] || deal.link?.replace(/-\d{7}$/, '').match(/\b(\d{4,6})\b/)?.[1] || "N/A";
         const isSelected = selectedId === legoId ? "selected" : "";
         const temp = Math.round(deal.temperature || 0);
         
         // Remote API uses .photo
-        const imgSrc = deal.photo || `https://placehold.co/300x300?text=LEGO+${legoId}`;
+        const imgSrc = deal.photo || deal.image || `https://placehold.co/300x300?text=LEGO+${legoId}`;
         
         return `
-            <div class="card ${isSelected}" data-id="${legoId}" onclick="updateMarketInfo('${legoId}')">
+            <div class="card ${isSelected}" data-id="${legoId}" data-price="${deal.price}" onclick="updateMarketInfo('${legoId}', ${deal.price})">
                 <div class="card-image">
                     ${deal.discount ? `<div class="discount-badge">-${deal.discount}%</div>` : ""}
                     <img src="${imgSrc}" alt="${deal.title}" referrerpolicy="no-referrer"
@@ -130,8 +133,10 @@ const percentile = (arr, q) => {
     return sorted[base + 1] !== undefined ? sorted[base] + rest * (sorted[base + 1] - sorted[base]) : sorted[base];
 };
 
-const renderSalesIndicators = sales => {
+const renderSalesIndicators = (sales, dealPrice) => {
     spanNbSales.innerText = sales.length;
+    spanDealPrice.innerText = dealPrice != null ? dealPrice.toFixed(2) + " €" : "-";
+
     if (sales && sales.length > 0) {
         const prices = sales.map(s => {
             if (typeof s.price === 'object' && s.price.amount) return parseFloat(s.price.amount);
@@ -141,25 +146,42 @@ const renderSalesIndicators = sales => {
         if (prices.length > 0) {
             spanP5.innerText = percentile(prices, 0.05).toFixed(2) + " €";
             spanP25.innerText = percentile(prices, 0.25).toFixed(2) + " €";
-            spanP50.innerText = percentile(prices, 0.50).toFixed(2) + " €";
+            const p50 = percentile(prices, 0.50);
+            spanP50.innerText = p50.toFixed(2) + " €";
+
+            if (dealPrice != null) {
+                const profit = p50 - dealPrice;
+                const pct = ((profit / dealPrice) * 100).toFixed(0);
+                spanProfit.innerText = (profit >= 0 ? "+" : "") + profit.toFixed(2) + " € (" + pct + "%)";
+                spanProfit.style.color = profit >= 0 ? "var(--success, #22c55e)" : "var(--danger, #ef4444)";
+            } else {
+                spanProfit.innerText = "-";
+                spanProfit.style.color = "";
+            }
         }
 
         const dates = sales.map(s => s.published ? new Date(s.published * 1000) : null).filter(d => d !== null);
         if (dates.length > 1) {
             const diff = Math.ceil(Math.abs(new Date(Math.max(...dates)) - new Date(Math.min(...dates))) / (1000 * 60 * 60 * 24));
             spanLTV.innerText = diff + " days";
-        } else { spanLTV.innerText = "1 day"; }
+        } else {
+            spanLTV.innerText = "1 day";
+        }
     } else {
-        spanP5.innerText = "-"; spanP25.innerText = "-"; spanP50.innerText = "-"; spanLTV.innerText = "-";
+        spanP5.innerText = "-"; spanP25.innerText = "-"; spanP50.innerText = "-";
+        spanLTV.innerText = "-"; spanProfit.innerText = "-"; spanProfit.style.color = "";
     }
 };
 
-window.updateMarketInfo = async (id) => {
+window.updateMarketInfo = async (id, dealPrice) => {
     selectedId = id;
     spanSelectedId.innerText = id === "N/A" ? "N/A" : `#${id}`;
     const sales = await fetchSales(id);
-    renderSalesIndicators(sales);
-    document.querySelectorAll(".card").forEach(c => c.classList.toggle("selected", c.dataset.id === id));
+    renderSalesIndicators(sales, dealPrice);
+    document.querySelectorAll(".card").forEach(c => {
+        const isSelected = c.dataset.id === id && parseFloat(c.dataset.price) === dealPrice;
+        c.classList.toggle("selected", isSelected);
+    });
 };
 
 window.toggleFavorite = (e, uuid) => {
@@ -183,13 +205,15 @@ const loadPage = async (page) => {
     nextBtn.disabled = currentPagination.currentPage === currentPagination.pageCount;
     renderDeals();
     if (allDeals.length > 0 && !selectedId) {
-        updateMarketInfo(allDeals[0].id || allDeals[0].title.match(/\b(\d{4,6})\b/)?.[1] || "N/A");
+        const first = allDeals[0];
+        const firstId = first.id || first.title.match(/\b(\d{4,6})\b/)?.[1] || "N/A";
+        updateMarketInfo(firstId, first.price);
     }
 };
 
 const populateIdDropdown = async () => {
     try {
-        const response = await fetch("https://server-fawn-omega-23.vercel.app/deals?size=100");
+        const response = await fetch("http://localhost:8092/deals?size=100");
         const body = await response.json();
         if (body.success) {
             const idSet = new Set();

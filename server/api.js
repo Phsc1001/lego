@@ -40,7 +40,8 @@ app.get('/proxy', async (req, res) => {
     try {
         const response = await fetch(url, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Referer': 'https://www.dealabs.com/'
             }
         });
         const buffer = await response.arrayBuffer();
@@ -52,24 +53,67 @@ app.get('/proxy', async (req, res) => {
     }
 });
 
-app.get('/deals', (req, res) => {
-    const { DEALS } = getData();
-    let { page = 1, size = 12, search = "", filterBy = "" } = req.query;
-    page = parseInt(page);
-    size = parseInt(size);
+const extractId = d => d.id || d.title.match(/\b(\d{4,6})\b/)?.[1] || null;
 
-    let filtered = [...DEALS];
+const filterAndSearch = (DEALS, { search = "", filterBy = "", price, date, sort = "" } = {}) => {
+    let filtered = DEALS
+        .map(d => ({ ...d, id: extractId(d), photo: d.photo || d.image || null }))
+        .filter(d => d.id !== null); // exclude deals with no LEGO set ID (video games, etc.)
     if (search) {
         const query = search.toLowerCase();
-        filtered = filtered.filter(d => 
+        filtered = filtered.filter(d =>
             d.title.toLowerCase().includes(query) || (d.id && d.id.includes(query))
         );
     }
-
+    if (price) filtered = filtered.filter(d => d.price <= parseFloat(price));
+    if (date) filtered = filtered.filter(d => d.published >= new Date(date).getTime() / 1000);
     if (filterBy === 'best-discount') filtered = filtered.filter(d => (d.discount || 0) >= 50);
-    if (filterBy === 'most-commented') filtered = filtered.filter(d => (d.comments || 0) >= 15);
+    if (filterBy === 'most-commented') {
+        const maxComments = Math.max(...filtered.map(d => d.comments || 0));
+        if (maxComments > 0) {
+            filtered = filtered.filter(d => (d.comments || 0) >= Math.max(1, maxComments * 0.5));
+        } else {
+            // fallback: top 33% by temperature when all comments are 0
+            filtered = filtered.sort((a, b) => b.temperature - a.temperature).slice(0, Math.ceil(filtered.length / 3));
+        }
+    }
     if (filterBy === 'hot-deals') filtered = filtered.filter(d => (d.temperature || 0) >= 100);
 
+    if (sort === 'price-desc') return filtered.sort((a, b) => b.price - a.price);
+    if (sort === 'date-desc') return filtered.sort((a, b) => b.published - a.published);
+    if (sort === 'date-asc') return filtered.sort((a, b) => a.published - b.published);
+    return filtered.sort((a, b) => a.price - b.price); // default: price-asc
+};
+
+app.get('/deals/search', (req, res) => {
+    const { DEALS } = getData();
+    const { limit = 12, page = 1, ...filters } = req.query;
+    const filtered = filterAndSearch(DEALS, filters);
+    const lim = parseInt(limit);
+    const pg = parseInt(page);
+    const start = (pg - 1) * lim;
+    res.json({
+        success: true,
+        data: {
+            result: filtered.slice(start, start + lim),
+            meta: { count: filtered.length, pageCount: Math.ceil(filtered.length / lim), currentPage: pg, pageSize: lim }
+        }
+    });
+});
+
+app.get('/deals/:id', (req, res) => {
+    const { DEALS } = getData();
+    const deal = DEALS.find(d => d.uuid === req.params.id);
+    if (!deal) return res.status(404).json({ success: false, message: 'Deal not found' });
+    res.json({ success: true, data: { ...deal, id: deal.id || deal.title.match(/\b(\d{4,6})\b/)?.[1] || null, photo: deal.photo || deal.image || null } });
+});
+
+app.get('/deals', (req, res) => {
+    const { DEALS } = getData();
+    let { page = 1, size = 12, filterBy = "", search = "", sort = "" } = req.query;
+    page = parseInt(page);
+    size = parseInt(size);
+    const filtered = filterAndSearch(DEALS, { search, filterBy, sort });
     const start = (page - 1) * size;
     res.json({
         success: true,
@@ -98,7 +142,7 @@ app.get('/sales/search', async (req, res) => {
 
     // Fallback 2: Market Estimator (Ensures UI is NEVER empty)
     if (result.length === 0) {
-        const deal = DEALS.find(d => d.id === legoSetId);
+        const deal = DEALS.find(d => (d.id === legoSetId) || (d.title && d.title.match(/\b(\d{4,6})\b/)?.[1] === legoSetId));
         if (deal) {
             const p50 = deal.price * 1.25;
             result = Array.from({length: 5}, (_, i) => ({

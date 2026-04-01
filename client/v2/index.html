@@ -44,9 +44,12 @@
                         <option value="">Sort: Default</option>
                         <option value="price-asc">Price: Low to High</option>
                         <option value="price-desc">Price: High to Low</option>
+                        <option value="date-desc">Date: Newest First</option>
+                        <option value="date-asc">Date: Oldest First</option>
                     </select>
                     <select class="select-control" id="show-select">
-                        <option value="12">12 / page</option>
+                        <option value="6">6 / page</option>
+                        <option value="12" selected>12 / page</option>
                         <option value="24">24 / page</option>
                     </select>
                 </div>
@@ -68,7 +71,7 @@
         <aside class="sidebar">
             <div class="section-header">
                 <i class="fas fa-chart-line"></i>
-                <h2 style="font-size: 1rem; font-weight: 800; text-transform: uppercase;">Market Intel</h2>
+                <h2 style="font-size: 1rem; font-weight: 800; text-transform: uppercase;">Market Intelligence</h2>
             </div>
 
             <div class="intel-card">
@@ -101,6 +104,14 @@
                     <div class="metric-box full">
                         <span class="metric-label">Market Velocity</span>
                         <span id="ltvPrice" class="metric-value">-</span>
+                    </div>
+                    <div class="metric-box full" style="border-top: 1px solid var(--border); padding-top: 0.75rem; margin-top: 0.25rem;">
+                        <span class="metric-label">Deal Price</span>
+                        <span id="dealPrice" class="metric-value">-</span>
+                    </div>
+                    <div class="metric-box full">
+                        <span class="metric-label">Profit Potential</span>
+                        <span id="profitPotential" class="metric-value">-</span>
                     </div>
                 </div>
             </div>
