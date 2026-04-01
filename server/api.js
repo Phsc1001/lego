@@ -161,4 +161,8 @@ app.get('/sales/search', async (req, res) => {
     res.json({ success: true, data: { result } });
 });
 
-app.listen(PORT, () => console.log(`Dashboard API ready at http://localhost:${PORT}`));
+export default app;
+
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => console.log(`Dashboard API ready at http://localhost:${PORT}`));
+}

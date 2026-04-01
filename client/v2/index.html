@@ -90,59 +90,61 @@
 
         <aside class="sidebar">
             <div class="section-header">
-                <i class="fas fa-chart-line"></i>
-                <h2 style="font-size: 1rem; font-weight: 800; text-transform: uppercase;">Market Intelligence</h2>
+                <i class="fas fa-chart-bar"></i>
+                <h2>Market Analysis</h2>
             </div>
 
             <div class="intel-card">
                 <div class="selected-set">
-                    <span class="set-label">Active Analysis</span>
+                    <span class="set-label">Lego Set</span>
                     <span id="selected-set-id" class="set-id">#----</span>
                 </div>
 
-                <!-- ROI Hero — always first, full-width -->
                 <div class="roi-hero-widget">
-                    <span class="metric-label" style="justify-content:center; margin-bottom:0.3rem;">
-                        Estimated ROI <i class="tip" data-tip="Return on Investment: (Median Resale − Deal Price) ÷ Deal Price × 100">?</i>
-                    </span>
+                    <span class="metric-label">Estimated ROI</span>
                     <span id="roiPercent" class="roi-value">—</span>
                 </div>
 
-                <!-- Profit-first 2×2 grid: Deal Price | Median | Resale | Buy Signal -->
                 <div id="market-stats" class="metrics-rows">
+                    <!-- Price Context -->
                     <div class="metric-row divider">
                         <span class="metric-label">Deal Price</span>
                         <span id="dealPrice" class="metric-value">-</span>
                     </div>
                     <div class="metric-row highlight">
-                        <span class="metric-label">Median (P50) <i class="tip" data-tip="Fair market value — half sell above, half below">?</i></span>
+                        <span class="metric-label">Median Resale</span>
                         <span id="p50Price" class="metric-value large">-</span>
                     </div>
+                    
+                    <!-- Market Volume -->
                     <div class="metric-row">
                         <span class="metric-label">Resale Listings</span>
                         <span id="nbSales" class="metric-value">0</span>
                     </div>
                     <div class="metric-row">
-                        <span class="metric-label">Buy Signal <i class="tip" data-tip="Investment signal: Strong Buy / Hold / Liquidate based on profit potential">?</i></span>
+                        <span class="metric-label">Buy Signal</span>
                         <div id="buySignal" class="buy-signal">
                             <span class="buy-signal-track"><span class="buy-signal-fill"></span></span>
                             <span class="buy-signal-label">—</span>
                         </div>
-                        <span id="ltvPrice" style="display:none"></span>
                     </div>
-                    <!-- Full-width rows (nth-child ≥ 5) -->
+
+                    <!-- Market Depth -->
                     <div class="metric-row">
-                        <span class="metric-label">P5 Price <i class="tip" data-tip="Cheapest 5% of resale listings">?</i></span>
+                        <span class="metric-label">P5 (Cheapest 5%)</span>
                         <span id="p5Price" class="metric-value">-</span>
                     </div>
                     <div class="metric-row">
-                        <span class="metric-label">P25 Price <i class="tip" data-tip="Bottom quarter of resale prices">?</i></span>
+                        <span class="metric-label">P25 (Bottom 25%)</span>
                         <span id="p25Price" class="metric-value">-</span>
                     </div>
+
+                    <!-- Profit Summary -->
                     <div class="metric-row">
-                        <span class="metric-label"><span class="tl-dot" id="tl-dot"></span> Profit Potential <i class="tip" data-tip="Median resale minus your deal price">?</i></span>
+                        <span class="metric-label"><span class="tl-dot" id="tl-dot"></span> Profit Potential</span>
                         <span id="profitPotential" class="metric-value">-</span>
                     </div>
+                    <span id="ltvPrice" style="display:none"></span>
                 </div>
             </div>
 
