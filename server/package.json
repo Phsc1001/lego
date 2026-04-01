@@ -2,7 +2,7 @@
   "name": "lego-scraper",
   "version": "0.0.1",
   "description": "First bricks for profitability",
-  "main": "index.js",
+  "main": "scraper.js",
   "repository": "git@github.com:92bondstreet/lego.git",
   "type": "module",
   "dependencies": {
