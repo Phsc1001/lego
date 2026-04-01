@@ -58,7 +58,7 @@ const extractId = d => d.id || d.title.match(/\b(\d{4,6})\b/)?.[1] || null;
 const filterAndSearch = (DEALS, { search = "", filterBy = "", price, date, sort = "" } = {}) => {
     let filtered = DEALS
         .map(d => ({ ...d, id: extractId(d), photo: d.photo || d.image || null }))
-        .filter(d => d.id !== null); // exclude deals with no LEGO set ID (video games, etc.)
+        .filter(d => d.id !== null);
     if (search) {
         const query = search.toLowerCase();
         filtered = filtered.filter(d =>

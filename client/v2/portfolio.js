@@ -19,10 +19,21 @@ const spanProfit = document.querySelector("#profitPotential");
 const marketStats = document.querySelector("#market-stats");
 const marketLoading = document.querySelector("#market-loading");
 
-let allDeals = []; 
+let allDeals = [];
 let currentPagination = {};
 let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
 let selectedId = null;
+let selectedPrice = null;
+
+const getDealId = d => d.id || d.title.match(/\b(\d{4,6})\b/)?.[1] || d.link?.replace(/-\d{7}$/, '').match(/\b(\d{4,6})\b/)?.[1] || null;
+const isRealSetId = id => id && /^\d{4,6}$/.test(id);
+const timeAgo = ts => {
+    const diff = Math.floor((Date.now() / 1000 - ts) / 86400);
+    if (diff === 0) return 'Today';
+    if (diff === 1) return '1d ago';
+    return `${diff}d ago`;
+};
+const tempColor = temp => temp >= 300 ? '#ef4444' : temp >= 100 ? '#f97316' : '#64748b';
 
 const activeFilters = {
     discount: false, commented: false, hot: false, favorites: false, search: ""
@@ -91,18 +102,18 @@ const renderDeals = () => {
 
     dealsGrid.innerHTML = dealsToRender.map(deal => {
         const isFav = favorites.some(fav => fav.uuid === deal.uuid);
-        // Remote API uses .id or we extract from title
-        const legoId = deal.id || deal.title.match(/\b(\d{4,6})\b/)?.[1] || deal.link?.replace(/-\d{7}$/, '').match(/\b(\d{4,6})\b/)?.[1] || "N/A";
-        const isSelected = selectedId === legoId ? "selected" : "";
+        const legoId = getDealId(deal) || "N/A";
+        const isSelected = selectedId === legoId && selectedPrice === deal.price ? "selected" : "";
         const temp = Math.round(deal.temperature || 0);
-        
-        // Remote API uses .photo
         const imgSrc = deal.photo || deal.image || `https://placehold.co/300x300?text=LEGO+${legoId}`;
-        
+        const age = deal.published ? timeAgo(deal.published) : "";
+        const retailHtml = deal.retail ? `<span style="text-decoration:line-through; color:var(--text-muted); font-size:0.75rem; margin-right:4px;">${deal.retail} €</span>` : "";
+
         return `
             <div class="card ${isSelected}" data-id="${legoId}" data-price="${deal.price}" onclick="updateMarketInfo('${legoId}', ${deal.price})">
                 <div class="card-image">
                     ${deal.discount ? `<div class="discount-badge">-${deal.discount}%</div>` : ""}
+                    ${age ? `<div style="position:absolute; bottom:0.5rem; left:0.5rem; background:rgba(0,0,0,0.55); color:#fff; font-size:0.65rem; padding:2px 6px; border-radius:4px;">${age}</div>` : ""}
                     <img src="${imgSrc}" alt="${deal.title}" referrerpolicy="no-referrer"
                          onerror="this.onerror=null; this.src='https://placehold.co/300x300?text=LEGO+${legoId}';">
                     <button class="fav-toggle ${isFav ? 'active' : ''}" style="position:absolute; top:1rem; right:1rem; border:none; background:white; width:35px; height:35px; border-radius:50%; cursor:pointer; color:${isFav ? 'var(--accent)' : '#cbd5e1'}; box-shadow:0 2px 5px rgba(0,0,0,0.1);" onclick="toggleFavorite(event, '${deal.uuid}')">
@@ -110,12 +121,12 @@ const renderDeals = () => {
                     </button>
                 </div>
                 <div class="card-content">
-                    <div class="card-meta">SET ${legoId}</div>
+                    <div class="card-meta">SET ${isRealSetId(legoId) ? legoId : '—'}</div>
                     <h3 class="card-title">${deal.title}</h3>
                     <div class="card-footer">
-                        <div class="card-price"><span class="price-now">${deal.price} €</span></div>
+                        <div class="card-price">${retailHtml}<span class="price-now">${deal.price} €</span></div>
                         <div class="card-stats">
-                            <div class="stat ${temp > 100 ? 'hot' : ''}"><i class="fas fa-fire"></i> ${temp}°</div>
+                            <div class="stat" style="color:${tempColor(temp)}"><i class="fas fa-fire"></i> ${temp}°</div>
                             <div class="stat"><i class="fas fa-comment"></i> ${deal.comments || 0}</div>
                         </div>
                     </div>
@@ -173,14 +184,38 @@ const renderSalesIndicators = (sales, dealPrice) => {
     }
 };
 
+const renderRelatedDeals = (setId, currentPrice) => {
+    const section = document.querySelector("#related-section");
+    const container = document.querySelector("#related-deals");
+    if (!section || !container) return;
+
+    if (!isRealSetId(setId)) { section.style.display = "none"; return; }
+
+    const related = allDeals.filter(d => getDealId(d) === setId);
+    if (related.length <= 1) { section.style.display = "none"; return; }
+
+    section.style.display = "block";
+    container.innerHTML = related.map(deal => {
+        const isActive = deal.price === currentPrice;
+        return `<div onclick="updateMarketInfo('${setId}', ${deal.price})"
+                     style="padding:0.55rem 0.75rem; border-radius:8px; cursor:pointer; margin-bottom:0.4rem; display:flex; justify-content:space-between; align-items:center;
+                            background:${isActive ? 'rgba(99,102,241,0.08)' : 'transparent'};
+                            border:1px solid ${isActive ? 'var(--primary, #6366f1)' : 'var(--border, #e2e8f0)'};">
+                    <span style="font-size:0.7rem; color:var(--text-muted); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-right:0.5rem;">${deal.title.substring(0, 38)}…</span>
+                    <span style="font-size:0.8rem; font-weight:700; white-space:nowrap; color:${isActive ? 'var(--primary, #6366f1)' : 'inherit'}">${deal.price.toFixed(2)} €</span>
+                </div>`;
+    }).join('');
+};
+
 window.updateMarketInfo = async (id, dealPrice) => {
     selectedId = id;
-    spanSelectedId.innerText = id === "N/A" ? "N/A" : `#${id}`;
-    const sales = await fetchSales(id);
+    selectedPrice = dealPrice;
+    spanSelectedId.innerText = isRealSetId(id) ? `#${id}` : "—";
+    const sales = await fetchSales(isRealSetId(id) ? id : null);
     renderSalesIndicators(sales, dealPrice);
+    renderRelatedDeals(id, dealPrice);
     document.querySelectorAll(".card").forEach(c => {
-        const isSelected = c.dataset.id === id && parseFloat(c.dataset.price) === dealPrice;
-        c.classList.toggle("selected", isSelected);
+        c.classList.toggle("selected", c.dataset.id === id && parseFloat(c.dataset.price) === dealPrice);
     });
 };
 
@@ -217,7 +252,7 @@ const populateIdDropdown = async () => {
         const body = await response.json();
         if (body.success) {
             const idSet = new Set();
-            body.data.result.forEach(d => { const id = d.id || d.title.match(/\b(\d{4,6})\b/)?.[1]; if (id) idSet.add(id); });
+            body.data.result.forEach(d => { const id = getDealId(d); if (isRealSetId(id)) idSet.add(id); });
             legoIdSelect.innerHTML = '<option value="">Search by LEGO Set ID...</option>';
             Array.from(idSet).sort().forEach(id => {
                 const opt = document.createElement("option");

@@ -34,19 +34,25 @@ async function scrapeVinted (lego) {
   }
 }
 
-async function scrapeDealabs (website = "https://www.dealabs.com/groupe/lego") {
+async function scrapeDealabs (baseUrl = "https://www.dealabs.com/groupe/lego") {
   try {
-    console.log(`?? browsing ${website} website`);
+    const allDeals = [];
+    const PAGES = 5;
 
-    const deals = await dealabs.scrape(website);
+    for (let page = 1; page <= PAGES; page++) {
+      const url = `${baseUrl}?page=${page}`;
+      console.log(`Scraping page ${page}/${PAGES}: ${url}`);
+      const deals = await dealabs.scrape(url);
+      if (!deals || deals.length === 0) { console.log(`No deals on page ${page}, stopping.`); break; }
+      allDeals.push(...deals);
+      if (page < PAGES) await new Promise(r => setTimeout(r, 800)); // polite delay
+    }
 
-    console.log(deals);
-    console.log("done");
-    
-    // Step 2: Store the list into a JSON file
-    writeFileSync("deals.json", JSON.stringify(deals, null, 2));
+    // Deduplicate by uuid
+    const unique = [...new Map(allDeals.map(d => [d.uuid, d])).values()];
+    console.log(`Total: ${unique.length} unique deals across ${PAGES} pages`);
+    writeFileSync("deals.json", JSON.stringify(unique, null, 2));
     console.log("Results saved to deals.json");
-    
     process.exit(0);
   } catch (e) {
     console.error(e);

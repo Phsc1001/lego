@@ -24,11 +24,12 @@ const parse = data => {
         const retail = thread.nextBestPrice || thread.retailPrice || null;
         const discount = retail && thread.price ? Math.round((1 - thread.price / retail) * 100) : (thread.discountPercent || null);
 
-        // Extract LEGO set ID: try title first, then strip thread ID from URL and search there
+        // Extract LEGO set ID: try title first, then URL slug, then use thread ID as last resort
         const idFromTitle = thread.title.match(/\b(\d{4,6})\b/)?.[1];
         const urlSlug = link.replace(/-\d{7}$/, '');
         const idFromUrl = !idFromTitle ? urlSlug.match(/\b(\d{4,6})\b/)?.[1] : null;
-        const id = idFromTitle || idFromUrl || null;
+        const threadId = link.match(/(\d+)$/)?.[1] || null;
+        const id = idFromTitle || idFromUrl || threadId;
 
         return {
           link,
